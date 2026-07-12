@@ -1,0 +1,68 @@
+import { google } from "@ai-sdk/google";
+import { generateObject } from "ai";
+import { z } from "zod";
+import { getSupabase } from "@/lib/supabase";
+
+export const maxDuration = 15;
+
+const filterSchema = z.object({
+  budget_max: z.number().nullable(),
+  budget_min: z.number().nullable(),
+  brand: z.string().nullable(),
+  model: z.string().nullable(),
+  category: z.enum(["matic", "bebek", "sport", "trail", "touring"]).nullable(),
+  year_min: z.number().nullable(),
+  year_max: z.number().nullable(),
+  km_max: z.number().nullable(),
+  color: z.string().nullable(),
+  tax_status: z.enum(["hidup", "mati"]).nullable(),
+  tags: z
+    .array(z.string())
+    .describe(
+      "Kebutuhan tersirat: irit, mahasiswa, harian, touring, wanita, keluarga, kerja, ojol, murah, km rendah, tahun muda, sporty, seperti baru"
+    ),
+});
+
+export async function POST(req: Request) {
+  const { query } = (await req.json()) as { query: string };
+  if (!query?.trim()) {
+    return Response.json({ error: "Query kosong" }, { status: 400 });
+  }
+
+  const { object: f } = await generateObject({
+    model: google("gemini-2.0-flash"),
+    schema: filterSchema,
+    prompt: `Terjemahkan pencarian motor bekas berikut menjadi filter database. Harga dalam rupiah ("18 juta" = 18000000). Set null jika tidak disebut/tersirat.\n\nPencarian: "${query}"`,
+  });
+
+  const supabase = getSupabase();
+  let q = supabase.from("motors").select("*").eq("status", "tersedia");
+
+  if (f.budget_max) q = q.lte("price", f.budget_max);
+  if (f.budget_min) q = q.gte("price", f.budget_min);
+  if (f.brand) q = q.ilike("brand", `%${f.brand}%`);
+  if (f.model) q = q.ilike("model", `%${f.model}%`);
+  if (f.category) q = q.eq("category", f.category);
+  if (f.year_min) q = q.gte("year", f.year_min);
+  if (f.year_max) q = q.lte("year", f.year_max);
+  if (f.km_max) q = q.lte("km", f.km_max);
+  if (f.color) q = q.ilike("color", `%${f.color}%`);
+  if (f.tax_status) q = q.eq("tax_status", f.tax_status);
+
+  let { data, error } = await q.order("price").limit(12);
+  if (error) return Response.json({ error: error.message }, { status: 500 });
+
+  // Fallback: jika filter ketat tidak menemukan apa pun, coba cocokkan lewat tags
+  if ((!data || data.length === 0) && f.tags.length > 0) {
+    const res = await supabase
+      .from("motors")
+      .select("*")
+      .eq("status", "tersedia")
+      .overlaps("tags", f.tags)
+      .order("price")
+      .limit(12);
+    data = res.data;
+  }
+
+  return Response.json({ filters: f, results: data ?? [] });
+}
