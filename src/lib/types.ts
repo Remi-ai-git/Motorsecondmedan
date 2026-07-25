@@ -76,6 +76,19 @@ export interface CreditSimulationResult {
   rows: CreditSimulationRow[];
 }
 
+/**
+ * Bentuk baris hasil simulasi yang aman dikirim ke publik — tanpa
+ * annual_rate_percent (bunga) & first_installment, keduanya info internal.
+ */
+export type PublicCreditSimulationRow = Omit<
+  CreditSimulationRow,
+  "annual_rate_percent" | "first_installment"
+>;
+
+export interface PublicCreditSimulationResult extends Omit<CreditSimulationResult, "rows"> {
+  rows: PublicCreditSimulationRow[];
+}
+
 export interface Faq {
   id: string;
   question: string;

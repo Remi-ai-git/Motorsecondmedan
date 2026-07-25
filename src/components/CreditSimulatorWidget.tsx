@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { formatRupiah } from "@/lib/types";
-import type { CreditSimulationResult } from "@/lib/types";
+import type { PublicCreditSimulationResult } from "@/lib/types";
 
 export default function CreditSimulatorWidget({
   motorId,
@@ -15,7 +15,7 @@ export default function CreditSimulatorWidget({
   const [dp, setDp] = useState(String(minDpGuess));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [result, setResult] = useState<CreditSimulationResult | null>(null);
+  const [result, setResult] = useState<PublicCreditSimulationResult | null>(null);
 
   async function hitung() {
     setLoading(true);
@@ -29,7 +29,7 @@ export default function CreditSimulatorWidget({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error ?? "Gagal menghitung simulasi.");
-      setResult(data.result as CreditSimulationResult);
+      setResult(data.result as PublicCreditSimulationResult);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Gagal menghitung simulasi.");
     } finally {
@@ -99,25 +99,19 @@ export default function CreditSimulatorWidget({
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[520px] text-sm">
+            <table className="w-full min-w-[320px] text-sm">
               <thead>
                 <tr className="border-b border-zinc-200 text-left text-zinc-500">
                   <th className="py-2 pr-3">Tenor</th>
-                  <th className="py-2 pr-3">Bunga/th</th>
-                  <th className="py-2 pr-3">Angsuran/bln</th>
-                  <th className="py-2 pr-3">Angsuran ke-1</th>
+                  <th className="py-2 pr-3">Angsuran/bulan</th>
                 </tr>
               </thead>
               <tbody>
                 {result.rows.map((row) => (
                   <tr key={row.tenor} className="border-b border-zinc-100 last:border-0">
-                    <td className="py-2 pr-3 font-medium">{row.tenor} bln</td>
-                    <td className="py-2 pr-3 text-zinc-500">{row.annual_rate_percent}%</td>
+                    <td className="py-2 pr-3 font-medium">{row.tenor} bulan</td>
                     <td className="py-2 pr-3 font-semibold text-rose-600">
                       {formatRupiah(row.monthly_installment)}
-                    </td>
-                    <td className="py-2 pr-3 text-zinc-500">
-                      {formatRupiah(row.first_installment)}
                     </td>
                   </tr>
                 ))}
@@ -142,8 +136,8 @@ export default function CreditSimulatorWidget({
           </details>
 
           <p className="mt-3 text-xs text-zinc-400">
-            *Angsuran ke-1 sudah dipotong promo. Taksiran ini belum termasuk biaya
-            notaris/survey yang mungkin berlaku sesuai kebijakan leasing.
+            *Taksiran ini belum termasuk biaya notaris/survey yang mungkin
+            berlaku sesuai kebijakan leasing.
           </p>
         </div>
       )}

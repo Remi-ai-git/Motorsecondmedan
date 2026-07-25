@@ -4,6 +4,18 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Motor } from "@/lib/types";
 import { CATEGORY_OPTIONS, TAX_STATUS_OPTIONS, STATUS_OPTIONS } from "@/lib/motor-schema";
+import {
+  BRAND_OPTIONS,
+  SUPPORTED_CREDIT_BRANDS,
+  OTHER_BRAND_OPTION,
+  modelsForBrand,
+} from "@/lib/motor-model-catalog";
+
+/** Brand yang tersimpan di DB -> pilihan dropdown ("Lainnya" kalau tidak dikenal). */
+function brandToChoice(brand: string): string {
+  const upper = brand.trim().toUpperCase();
+  return SUPPORTED_CREDIT_BRANDS.includes(upper) ? upper : OTHER_BRAND_OPTION;
+}
 
 type FormState = {
   slug: string;
@@ -62,9 +74,30 @@ function toFormState(m?: Motor): FormState {
 export default function MotorForm({ initial, motorId }: { initial?: Motor; motorId?: string }) {
   const router = useRouter();
   const [form, setForm] = useState<FormState>(() => toFormState(initial));
+  const [brandChoice, setBrandChoice] = useState<string>(() => brandToChoice(initial?.brand ?? ""));
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  const isOtherBrand = brandChoice === OTHER_BRAND_OPTION;
+  const modelOptions = isOtherBrand ? [] : modelsForBrand(brandChoice);
+  // Kalau nilai model saat ini (data lama) tidak ada di daftar resmi, tetap
+  // tampilkan sebagai opsi supaya tidak hilang diam-diam — admin akan lihat
+  // dan bisa pilih ulang model yang benar.
+  const currentModelUnknown =
+    !isOtherBrand &&
+    form.model.trim() !== "" &&
+    !modelOptions.some((m) => m.toUpperCase() === form.model.trim().toUpperCase());
+
+  function handleBrandChoice(choice: string) {
+    setBrandChoice(choice);
+    if (choice === OTHER_BRAND_OPTION) {
+      set("brand", "");
+    } else {
+      set("brand", choice);
+    }
+    set("model", ""); // reset model tiap ganti brand supaya tidak nyangkut model brand lama
+  }
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -199,11 +232,65 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className={labelClass}>Merek *</label>
-          <input required className={inputClass} value={form.brand} onChange={(e) => set("brand", e.target.value)} placeholder="Honda" />
+          <select
+            required
+            className={inputClass}
+            value={brandChoice}
+            onChange={(e) => handleBrandChoice(e.target.value)}
+          >
+            <option value="" disabled>
+              -- Pilih merek --
+            </option>
+            {BRAND_OPTIONS.map((b) => (
+              <option key={b} value={b}>
+                {b === OTHER_BRAND_OPTION ? b : b.charAt(0) + b.slice(1).toLowerCase()}
+              </option>
+            ))}
+          </select>
+          {isOtherBrand && (
+            <input
+              required
+              className={`${inputClass} mt-2`}
+              value={form.brand}
+              onChange={(e) => set("brand", e.target.value)}
+              placeholder="Nama merek (contoh: Suzuki)"
+            />
+          )}
         </div>
         <div>
           <label className={labelClass}>Model *</label>
-          <input required className={inputClass} value={form.model} onChange={(e) => set("model", e.target.value)} placeholder="Beat" />
+          {isOtherBrand ? (
+            <input
+              required
+              className={inputClass}
+              value={form.model}
+              onChange={(e) => set("model", e.target.value)}
+              placeholder="Contoh: Address"
+            />
+          ) : (
+            <select
+              required
+              className={inputClass}
+              value={form.model}
+              onChange={(e) => set("model", e.target.value)}
+            >
+              <option value="" disabled>
+                -- Pilih model --
+              </option>
+              {currentModelUnknown && (
+                <option value={form.model}>{form.model} (data lama — pilih ulang)</option>
+              )}
+              {modelOptions.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+          )}
+          <p className="mt-1 text-xs text-zinc-400">
+            Daftar model sesuai tabel resmi leasing — supaya perhitungan kredit
+            (PGI) akurat. Detail trim/varian diisi di kolom Varian.
+          </p>
         </div>
         <div>
           <label className={labelClass}>Varian</label>
@@ -296,18 +383,19 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
           <input className={inputClass} value={form.promo} onChange={(e) => set("promo", e.target.value)} placeholder="Gratis servis 3x" />
         </div>
         <div>
-          <label className={labelClass}>Diskon/subsidi DP (Rp)</label>
+          <label className={labelClass}>Subsidi/potongan DP (Rp)</label>
           <input
             type="number"
-            min={0}
             className={inputClass}
             value={form.dp_discount}
             onChange={(e) => set("dp_discount", e.target.value)}
             placeholder="0"
           />
           <p className="mt-1 text-xs text-zinc-400">
-            Ditambahkan otomatis ke DP yang diinput pembeli di simulasi kredit
-            (contoh: pembeli input DP 5jt, diskon 2jt → dihitung seolah DP 7jt).
+            Ditambahkan ke DP yang diinput pembeli sebelum dihitung di simulasi
+            kredit. Isi positif untuk subsidi (contoh: DP input 5jt + subsidi 2jt
+            → dihitung seolah DP 7jt, angsuran lebih ringan). Isi negatif untuk
+            surcharge (mengurangi DP efektif, angsuran lebih berat).
           </p>
         </div>
         <div>

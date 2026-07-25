@@ -48,7 +48,17 @@ export async function POST(req: Request) {
 
   try {
     const result = simulateCredit({ motor: motor as Motor, settings: s, dpInput: dp });
-    return Response.json({ result });
+    // Bunga (annual_rate_percent) & angsuran ke-1 (first_installment) adalah
+    // informasi internal (rahasia penjual) — sengaja tidak dikirim ke publik,
+    // bukan cuma disembunyikan di UI, supaya tidak bisa dilihat lewat Network tab.
+    const publicResult = {
+      ...result,
+      rows: result.rows.map(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        ({ annual_rate_percent, first_installment, ...publicRow }) => publicRow
+      ),
+    };
+    return Response.json({ result: publicResult });
   } catch (e) {
     if (e instanceof CreditCalcError) {
       return Response.json({ error: e.message }, { status: 400 });

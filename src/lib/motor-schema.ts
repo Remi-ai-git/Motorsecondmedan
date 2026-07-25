@@ -1,7 +1,9 @@
 import { z } from "zod";
+import { modelsForBrand, SUPPORTED_CREDIT_BRANDS } from "@/lib/motor-model-catalog";
 
 /** Skema input form admin — dipakai di client (validasi form) & server (API). */
-export const motorInputSchema = z.object({
+export const motorInputSchema = z
+  .object({
   slug: z.string().optional(),
   brand: z.string().min(1, "Wajib diisi"),
   model: z.string().min(1, "Wajib diisi"),
@@ -24,8 +26,23 @@ export const motorInputSchema = z.object({
   description: z.string().optional().nullable(),
   tags: z.array(z.string()).default([]),
   images: z.array(z.string()).default([]),
-  dp_discount: z.coerce.number().min(0).default(0),
-});
+  // Subsidi DP dari penjual — bisa positif (menambah DP efektif, angsuran
+  // lebih ringan) atau negatif (surcharge, mengurangi DP efektif).
+  dp_discount: z.coerce.number().default(0),
+  })
+  .refine(
+    (data) => {
+      const brand = data.brand.trim().toUpperCase();
+      if (!SUPPORTED_CREDIT_BRANDS.includes(brand)) return true; // brand "Lainnya" — model bebas
+      const model = data.model.trim().toUpperCase();
+      return modelsForBrand(brand).some((m) => m.toUpperCase() === model);
+    },
+    {
+      message:
+        "Model tidak dikenali untuk brand ini. Pilih dari daftar model resmi supaya perhitungan kredit (PGI) akurat.",
+      path: ["model"],
+    }
+  );
 
 export type MotorInput = z.infer<typeof motorInputSchema>;
 
