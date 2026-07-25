@@ -27,11 +27,15 @@ export default function AISearchBar() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: q }),
       });
-      if (!res.ok) throw new Error("Pencarian gagal");
       const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? "Pencarian gagal");
       setResults(data.results);
-    } catch {
-      setError("Pencarian AI gagal. Coba lagi atau gunakan katalog di bawah.");
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : "Pencarian AI gagal. Coba lagi atau gunakan katalog di bawah."
+      );
     } finally {
       setLoading(false);
     }

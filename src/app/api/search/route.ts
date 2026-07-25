@@ -2,8 +2,13 @@ import { google } from "@ai-sdk/google";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { getSupabase } from "@/lib/supabase";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 export const maxDuration = 15;
+
+// Maks 20 pencarian / menit per IP.
+const SEARCH_LIMIT = 20;
+const SEARCH_WINDOW_MS = 60_000;
 
 const filterSchema = z.object({
   budget_max: z.number().nullable(),
@@ -24,9 +29,28 @@ const filterSchema = z.object({
 });
 
 export async function POST(req: Request) {
+  const ip = getClientIp(req);
+  const limit = rateLimit(`search:${ip}`, SEARCH_LIMIT, SEARCH_WINDOW_MS);
+  if (!limit.allowed) {
+    return Response.json(
+      { error: "Terlalu banyak pencarian dalam waktu singkat. Coba lagi sebentar lagi." },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(
+            Math.ceil((limit.resetAt - Date.now()) / 1000)
+          ),
+        },
+      }
+    );
+  }
+
   const { query } = (await req.json()) as { query: string };
   if (!query?.trim()) {
     return Response.json({ error: "Query kosong" }, { status: 400 });
+  }
+  if (query.length > 300) {
+    return Response.json({ error: "Query terlalu panjang" }, { status: 400 });
   }
 
   const { object: f } = await generateObject({

@@ -17,8 +17,18 @@ Website dealer motor bekas (Medan) dengan AI Sales Assistant berbasis **Google G
    - `GOOGLE_GENERATIVE_AI_API_KEY` — dari https://aistudio.google.com/apikey (**wajib** untuk fitur AI)
    - `SUPABASE_SERVICE_ROLE_KEY` — dari Supabase Dashboard > Settings > API (opsional, untuk simpan riwayat chat)
    - `NEXT_PUBLIC_WA_NUMBER` — nomor WhatsApp sales, format `62xxx`
+   - `NEXT_PUBLIC_SITE_URL` — domain produksi asli (dipakai `robots.txt` & `sitemap.xml`)
    - URL & anon key Supabase sudah terisi (project: ArtaMotor)
 3. `npm run dev` → http://localhost:3000
+
+## Checklist sebelum go-live
+
+- [ ] Set `GOOGLE_GENERATIVE_AI_API_KEY` sebagai Cloudflare Worker secret: `npx wrangler secret put GOOGLE_GENERATIVE_AI_API_KEY`
+- [ ] Cek RLS policy di Supabase Dashboard > Authentication > Policies — pastikan publik hanya bisa `SELECT` di `motors`/`faqs`, dan `chat_sessions`/`chat_messages` tidak bisa diakses anon sama sekali
+- [ ] Ganti data motor contoh dengan data asli
+- [ ] Ganti `NEXT_PUBLIC_WA_NUMBER` dengan nomor sales asli
+- [ ] Ganti `NEXT_PUBLIC_SITE_URL` di `wrangler.jsonc` dengan domain produksi asli
+- [ ] (Opsional, disarankan) Tambahkan Rate Limiting Rule di Cloudflare Dashboard > Security > WAF untuk `/api/chat` dan `/api/search` sebagai proteksi tambahan di level jaringan — rate limit dasar per-IP sudah ada di kode (`src/lib/rate-limit.ts`) tapi itu best-effort per isolate, bukan pengganti proteksi jaringan.
 
 ## Database (Supabase project `ArtaMotor`)
 

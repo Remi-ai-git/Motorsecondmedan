@@ -3,8 +3,14 @@ import { streamText, type Message } from "ai";
 import { aiTools } from "@/lib/ai/tools";
 import { buildSystemPrompt } from "@/lib/ai/system-prompt";
 import { getSupabaseAdmin } from "@/lib/supabase";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 export const maxDuration = 30;
+
+// Maks 15 pesan / menit per IP — cukup longgar untuk percakapan normal,
+// tapi meredam bot yang spam endpoint ini (biaya Gemini API per-panggilan).
+const CHAT_LIMIT = 15;
+const CHAT_WINDOW_MS = 60_000;
 
 async function saveHistory(
   sessionId: string,
@@ -27,6 +33,25 @@ async function saveHistory(
 }
 
 export async function POST(req: Request) {
+  const ip = getClientIp(req);
+  const limit = rateLimit(`chat:${ip}`, CHAT_LIMIT, CHAT_WINDOW_MS);
+  if (!limit.allowed) {
+    return Response.json(
+      {
+        error:
+          "Terlalu banyak pesan dalam waktu singkat. Coba lagi sebentar lagi ya.",
+      },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(
+            Math.ceil((limit.resetAt - Date.now()) / 1000)
+          ),
+        },
+      }
+    );
+  }
+
   const { messages, sessionId } = (await req.json()) as {
     messages: Message[];
     sessionId?: string;
