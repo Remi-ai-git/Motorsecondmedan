@@ -1,10 +1,7 @@
-import { ADMIN_COOKIE } from "@/lib/admin-auth";
+import { createClient } from "@/lib/supabase-auth/server";
 
 export async function POST() {
-  const res = Response.json({ ok: true });
-  res.headers.set(
-    "Set-Cookie",
-    `${ADMIN_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`
-  );
-  return res;
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  return Response.json({ ok: true });
 }

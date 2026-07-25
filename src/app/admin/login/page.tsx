@@ -2,12 +2,14 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { createClient } from "@/lib/supabase-auth/client";
 
 function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") || "/admin";
 
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,17 +19,13 @@ function LoginForm() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/admin/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error ?? "Login gagal");
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw new Error("Email atau password salah.");
       router.push(next);
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Login gagal");
+      setError(e instanceof Error ? e.message : "Login gagal.");
     } finally {
       setLoading(false);
     }
@@ -41,17 +39,26 @@ function LoginForm() {
       </p>
       <form onSubmit={handleSubmit} className="space-y-3">
         <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email"
+          autoFocus
+          autoComplete="username"
+          className="w-full rounded-lg border border-zinc-300 px-4 py-2.5 text-sm outline-none focus:border-rose-500"
+        />
+        <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password admin"
-          autoFocus
+          placeholder="Password"
+          autoComplete="current-password"
           className="w-full rounded-lg border border-zinc-300 px-4 py-2.5 text-sm outline-none focus:border-rose-500"
         />
         {error && <p className="text-sm text-rose-600">{error}</p>}
         <button
           type="submit"
-          disabled={loading || !password}
+          disabled={loading || !email || !password}
           className="w-full rounded-lg bg-rose-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-50"
         >
           {loading ? "Memproses…" : "Masuk"}
