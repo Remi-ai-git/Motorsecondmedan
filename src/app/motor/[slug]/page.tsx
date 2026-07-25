@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getSupabase } from "@/lib/supabase";
 import { formatRupiah, type Motor } from "@/lib/types";
+import MotorGallery from "@/components/MotorGallery";
 
 export const revalidate = 60;
 
@@ -49,14 +50,18 @@ export default async function MotorDetailPage({
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
-      <div className="mb-6 flex h-52 items-center justify-center rounded-2xl bg-gradient-to-br from-zinc-800 to-zinc-600 text-white">
-        <div className="text-center">
-          <p className="text-4xl font-bold">{motor.model}</p>
-          <p className="opacity-70">
-            {motor.brand} · {motor.year}
-          </p>
+      {motor.images && motor.images.length > 0 ? (
+        <MotorGallery images={motor.images} alt={`${motor.brand} ${motor.model} ${motor.year}`} />
+      ) : (
+        <div className="mb-6 flex h-52 items-center justify-center rounded-2xl bg-gradient-to-br from-zinc-800 to-zinc-600 text-white">
+          <div className="text-center">
+            <p className="text-4xl font-bold">{motor.model}</p>
+            <p className="opacity-70">
+              {motor.brand} · {motor.year}
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>

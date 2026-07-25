@@ -15,13 +15,23 @@ export default function MotorCard({ motor }: { motor: Motor }) {
       href={`/motor/${motor.slug}`}
       className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white transition hover:shadow-lg"
     >
-      <div className="flex h-36 items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-600 text-white">
-        <div className="text-center">
-          <p className="text-2xl font-bold">{motor.model}</p>
-          <p className="text-sm opacity-70">
-            {motor.brand} · {motor.year}
-          </p>
-        </div>
+      <div className="relative flex h-36 items-center justify-center overflow-hidden bg-gradient-to-br from-zinc-800 to-zinc-600 text-white">
+        {motor.images?.[0] ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={motor.images[0]}
+            alt={`${motor.brand} ${motor.model} ${motor.year}`}
+            loading="lazy"
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="text-center">
+            <p className="text-2xl font-bold">{motor.model}</p>
+            <p className="text-sm opacity-70">
+              {motor.brand} · {motor.year}
+            </p>
+          </div>
+        )}
       </div>
       <div className="space-y-2 p-4">
         <div className="flex items-center justify-between gap-2">
