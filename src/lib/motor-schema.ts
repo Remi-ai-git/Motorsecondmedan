@@ -24,6 +24,7 @@ export const motorInputSchema = z.object({
   description: z.string().optional().nullable(),
   tags: z.array(z.string()).default([]),
   images: z.array(z.string()).default([]),
+  dp_discount: z.coerce.number().min(0).default(0),
 });
 
 export type MotorInput = z.infer<typeof motorInputSchema>;

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getSupabase } from "@/lib/supabase";
 import { formatRupiah, type Motor } from "@/lib/types";
 import MotorGallery from "@/components/MotorGallery";
+import CreditSimulatorWidget from "@/components/CreditSimulatorWidget";
 
 export const revalidate = 60;
 
@@ -105,9 +106,11 @@ export default async function MotorDetailPage({
         ))}
       </div>
 
+      <CreditSimulatorWidget motorId={motor.id} price={motor.price} />
+
       <p className="mt-6 rounded-xl bg-sky-50 p-4 text-sm text-sky-800">
-        💬 Mau simulasi kredit atau bandingkan dengan motor lain? Tanya asisten
-        AI kami lewat tombol chat di pojok kanan bawah.
+        💬 Mau bandingkan dengan motor lain atau tanya kelengkapan surat? Tanya
+        asisten AI kami lewat tombol chat di pojok kanan bawah.
       </p>
     </div>
   );

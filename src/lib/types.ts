@@ -22,8 +22,58 @@ export interface Motor {
   description: string | null;
   tags: string[];
   images: string[];
+  /** Subsidi tambahan ke DP pembeli, diatur admin per motor (rupiah). */
+  dp_discount: number;
   created_at: string;
   updated_at: string;
+}
+
+/** Konfigurasi tarif simulasi kredit (singleton, diedit admin). */
+export interface CreditSettings {
+  id: true;
+  min_dp_percent: number;
+  vehicle_insurance_rate_12: number;
+  vehicle_insurance_rate_24: number;
+  vehicle_insurance_rate_36: number;
+  vehicle_insurance_monthly_below_12: number;
+  vehicle_insurance_monthly_12_23: number;
+  vehicle_insurance_monthly_24_35: number;
+  vehicle_insurance_monthly_36_plus: number;
+  life_insurance_base_premium: number;
+  pgi_premium: number;
+  pgi_excluded_models: string[];
+  oona_premium: number;
+  admin_fee: number;
+  tenors: number[];
+  /** Bunga pembiayaan per tahun (%), key = tenor (bulan) sebagai string. */
+  financing_rates: Record<string, number>;
+  first_installment_discount: number;
+  effective_from: string;
+  effective_until: string | null;
+  updated_at: string;
+}
+
+/** Rincian hasil simulasi kredit untuk satu pilihan tenor. */
+export interface CreditSimulationRow {
+  tenor: number;
+  vehicle_insurance: number;
+  life_insurance: number;
+  pgi: number;
+  oona: number;
+  admin_fee: number;
+  annual_rate_percent: number;
+  monthly_installment: number;
+  first_installment: number;
+}
+
+export interface CreditSimulationResult {
+  otr: number;
+  dp_input: number;
+  dp_discount: number;
+  dp_effective: number;
+  dp_percent: number;
+  financed_principal: number;
+  rows: CreditSimulationRow[];
 }
 
 export interface Faq {

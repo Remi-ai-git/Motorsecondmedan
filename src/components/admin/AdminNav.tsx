@@ -18,6 +18,9 @@ export default function AdminNav() {
         Admin Arta<span className="text-rose-600">Motor</span>
       </Link>
       <div className="flex items-center gap-3 text-sm">
+        <Link href="/admin/credit-settings" className="text-zinc-500 hover:text-zinc-800">
+          Tarif Kredit
+        </Link>
         <Link href="/" target="_blank" className="text-zinc-500 hover:text-zinc-800">
           Lihat situs ↗
         </Link>

@@ -28,6 +28,7 @@ type FormState = {
   description: string;
   tags: string;
   images: string[];
+  dp_discount: string;
 };
 
 function toFormState(m?: Motor): FormState {
@@ -54,6 +55,7 @@ function toFormState(m?: Motor): FormState {
     description: m?.description ?? "",
     tags: m?.tags?.join(", ") ?? "",
     images: m?.images ?? [],
+    dp_discount: m ? String(m.dp_discount ?? 0) : "0",
   };
 }
 
@@ -128,6 +130,7 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
         .map((t) => t.trim())
         .filter(Boolean),
       images: form.images,
+      dp_discount: form.dp_discount ? Number(form.dp_discount) : 0,
     };
 
     try {
@@ -291,6 +294,21 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
         <div>
           <label className={labelClass}>Promo (opsional)</label>
           <input className={inputClass} value={form.promo} onChange={(e) => set("promo", e.target.value)} placeholder="Gratis servis 3x" />
+        </div>
+        <div>
+          <label className={labelClass}>Diskon/subsidi DP (Rp)</label>
+          <input
+            type="number"
+            min={0}
+            className={inputClass}
+            value={form.dp_discount}
+            onChange={(e) => set("dp_discount", e.target.value)}
+            placeholder="0"
+          />
+          <p className="mt-1 text-xs text-zinc-400">
+            Ditambahkan otomatis ke DP yang diinput pembeli di simulasi kredit
+            (contoh: pembeli input DP 5jt, diskon 2jt → dihitung seolah DP 7jt).
+          </p>
         </div>
         <div>
           <label className={labelClass}>Deskripsi</label>
