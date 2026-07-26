@@ -62,7 +62,9 @@ export async function POST(req: Request) {
     [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
 
   const result = streamText({
-    model: google("gemini-2.0-flash"),
+    // Model ringan & murah (Flash-Lite) — cukup untuk chat FAQ/rekomendasi,
+    // biaya jauh lebih rendah daripada model Flash/Pro biasa.
+    model: google("gemini-3.1-flash-lite"),
     system: buildSystemPrompt(waNumber),
     messages,
     tools: aiTools,

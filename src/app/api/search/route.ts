@@ -54,7 +54,9 @@ export async function POST(req: Request) {
   }
 
   const { object: f } = await generateObject({
-    model: google("gemini-2.0-flash"),
+    // Model ringan & murah (Flash-Lite) — cukup untuk ekstraksi filter
+    // pencarian sederhana, biaya jauh lebih rendah daripada Flash/Pro biasa.
+    model: google("gemini-3.1-flash-lite"),
     schema: filterSchema,
     prompt: `Terjemahkan pencarian motor bekas berikut menjadi filter database. Harga dalam rupiah ("18 juta" = 18000000). Set null jika tidak disebut/tersirat.\n\nPencarian: "${query}"`,
   });
