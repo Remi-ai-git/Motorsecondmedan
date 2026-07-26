@@ -25,7 +25,7 @@ export const motorInputSchema = z
   promo: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
   tags: z.array(z.string()).default([]),
-  images: z.array(z.string()).default([]),
+  images: z.array(z.string()).max(6, "Maksimal 6 foto per motor").default([]),
   // Subsidi DP dari penjual — bisa positif (menambah DP efektif, angsuran
   // lebih ringan) atau negatif (surcharge, mengurangi DP efektif).
   dp_discount: z.coerce.number().default(0),

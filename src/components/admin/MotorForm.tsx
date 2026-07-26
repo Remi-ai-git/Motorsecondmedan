@@ -103,18 +103,32 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
     setForm((f) => ({ ...f, [key]: value }));
   }
 
+  const MAX_PHOTOS = 6;
+
   async function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
+    const remaining = MAX_PHOTOS - form.images.length;
+    if (remaining <= 0) {
+      setError(`Maksimal ${MAX_PHOTOS} foto per motor. Hapus foto lain dulu untuk menambah.`);
+      return;
+    }
+    const toUpload = Array.from(files).slice(0, remaining);
+    if (files.length > remaining) {
+      setError(
+        `Hanya ${remaining} foto yang diunggah — sisanya dilewati karena batas maksimal ${MAX_PHOTOS} foto tercapai.`
+      );
+    } else {
+      setError("");
+    }
     setUploading(true);
-    setError("");
     try {
-      for (const file of Array.from(files)) {
+      for (const file of toUpload) {
         const fd = new FormData();
         fd.append("file", file);
         const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
         const data = await res.json();
         if (!res.ok) throw new Error(data?.error ?? "Upload gagal");
-        set("images", [...form.images, data.url]);
+        setForm((f) => ({ ...f, images: [...f.images, data.url] }));
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Upload gagal");
@@ -197,12 +211,22 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
 
       {/* Foto */}
       <section>
-        <label className={labelClass}>Foto motor</label>
+        <div className="mb-1 flex items-baseline justify-between">
+          <label className={labelClass}>Foto motor</label>
+          <span className="text-xs text-zinc-400">
+            {form.images.length}/{MAX_PHOTOS} foto
+          </span>
+        </div>
         <div className="flex flex-wrap gap-3">
-          {form.images.map((url) => (
+          {form.images.map((url, i) => (
             <div key={url} className="relative h-24 w-32 overflow-hidden rounded-lg border border-zinc-200">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={url} alt="" className="h-full w-full object-cover" />
+              {i === 0 && (
+                <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white">
+                  Utama
+                </span>
+              )}
               <button
                 type="button"
                 onClick={() => removeImage(url)}
@@ -213,19 +237,25 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
               </button>
             </div>
           ))}
-          <label className="flex h-24 w-32 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-zinc-300 text-xs text-zinc-500 hover:border-rose-400 hover:text-rose-600">
-            {uploading ? "Mengunggah…" : "+ Tambah foto"}
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              multiple
-              className="hidden"
-              disabled={uploading}
-              onChange={(e) => handleFiles(e.target.files)}
-            />
-          </label>
+          {form.images.length < MAX_PHOTOS && (
+            <label className="flex h-24 w-32 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-zinc-300 text-xs text-zinc-500 hover:border-rose-400 hover:text-rose-600">
+              {uploading ? "Mengunggah…" : "+ Tambah foto"}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                multiple
+                className="hidden"
+                disabled={uploading}
+                onChange={(e) => handleFiles(e.target.files)}
+              />
+            </label>
+          )}
         </div>
-        <p className="mt-1 text-xs text-zinc-400">JPG/PNG/WebP, maks 5MB per foto. Foto pertama jadi foto utama.</p>
+        <p className="mt-1 text-xs text-zinc-400">
+          JPG/PNG/WebP, maks 5MB per foto, maksimal {MAX_PHOTOS} foto per motor.
+          Foto pertama jadi foto utama yang tampil di katalog — klik foto ini di
+          halaman detail untuk melihat semua foto lainnya.
+        </p>
       </section>
 
       {/* Info dasar */}
