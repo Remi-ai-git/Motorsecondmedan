@@ -15,12 +15,12 @@ export default function MotorGallery({
 
   return (
     <div className="mb-6">
-      <div className="h-64 overflow-hidden rounded-2xl bg-zinc-100 sm:h-80">
+      <div className="flex h-64 items-center justify-center overflow-hidden rounded-2xl bg-zinc-100 sm:h-80">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={images[active]}
           alt={alt}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-contain"
         />
       </div>
       {images.length > 1 && (
@@ -29,12 +29,12 @@ export default function MotorGallery({
             <button
               key={url}
               onClick={() => setActive(i)}
-              className={`h-16 w-20 flex-shrink-0 overflow-hidden rounded-lg border-2 ${
+              className={`flex h-16 w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg border-2 bg-zinc-100 ${
                 i === active ? "border-rose-600" : "border-transparent"
               }`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={url} alt="" className="h-full w-full object-cover" />
+              <img src={url} alt="" className="h-full w-full object-contain" />
             </button>
           ))}
         </div>

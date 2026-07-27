@@ -62,9 +62,12 @@ export async function POST(req: Request) {
     [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
 
   const result = streamText({
-    // Model ringan & murah (Flash-Lite) — cukup untuk chat FAQ/rekomendasi,
-    // biaya jauh lebih rendah daripada model Flash/Pro biasa.
-    model: google("gemini-3.1-flash-lite"),
+    // Model ringan & murah (Flash-Lite). Catatan: gemini-3.1-flash-lite
+    // sempat dicoba tapi bikin tool-calling (searchMotors, compareMotors,
+    // dll) hang tanpa respons — kemungkinan @ai-sdk/google@1.2.19 (versi
+    // terpasang) belum kompatibel dengan format function-calling Gemini 3.x.
+    // gemini-2.5-flash-lite tetap murah & terbukti jalan dengan tool calls.
+    model: google("gemini-2.5-flash-lite"),
     system: buildSystemPrompt(waNumber),
     messages,
     tools: aiTools,
