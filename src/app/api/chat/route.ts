@@ -79,5 +79,14 @@ export async function POST(req: Request) {
     },
   });
 
-  return result.toDataStreamResponse();
+  return result.toDataStreamResponse({
+    // TEMPORARY debugging — tampilkan pesan error asli ke client supaya
+    // gampang didiagnosis. HAPUS/kembalikan ke default setelah bug beres,
+    // karena bisa membocorkan detail internal ke pengguna.
+    getErrorMessage: (error) => {
+      console.error("Chat stream error:", error);
+      if (error instanceof Error) return `${error.name}: ${error.message}`;
+      return JSON.stringify(error);
+    },
+  });
 }
