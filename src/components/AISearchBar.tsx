@@ -48,7 +48,7 @@ export default function AISearchBar() {
           e.preventDefault();
           search(query);
         }}
-        className="flex gap-2"
+        className="flex flex-col gap-2 sm:flex-row"
       >
         <input
           value={query}
@@ -59,7 +59,7 @@ export default function AISearchBar() {
         <button
           type="submit"
           disabled={loading}
-          className="rounded-full bg-rose-600 px-5 py-3 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-50"
+          className="shrink-0 rounded-full bg-rose-600 px-5 py-3 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-50"
         >
           {loading ? "Mencari…" : "✨ Cari AI"}
         </button>
