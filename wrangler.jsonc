@@ -11,7 +11,7 @@
   "vars": {
     "NEXT_PUBLIC_SUPABASE_URL": "https://ugxhbuwgafzdtmhnjguh.supabase.co",
     "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVneGhidXdnYWZ6ZHRtaG5qZ3VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3ODAxMzEsImV4cCI6MjA5OTM1NjEzMX0.Hyrlw7ynn-SWYY-gJD5MmuuOrqJEIM0W9asA_un7Sq0",
-    "NEXT_PUBLIC_WA_NUMBER": "6281234567890",
+    "NEXT_PUBLIC_WA_NUMBER": "6285270706099",
     // TODO: ganti ke domain produksi asli sebelum go-live (dipakai robots.txt & sitemap.xml)
     "NEXT_PUBLIC_SITE_URL": "https://artamotor.example.com"
   }

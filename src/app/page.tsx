@@ -70,17 +70,8 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* AI Search */}
-      <section className="mx-auto max-w-6xl px-4 py-10">
-        <h2 className="mb-1 text-xl font-bold">Cari Motor dengan AI ✨</h2>
-        <p className="mb-4 text-sm text-zinc-500">
-          Ketik kebutuhan Anda dengan bahasa sehari-hari.
-        </p>
-        <AISearchBar />
-      </section>
-
       {/* Stok terbaru */}
-      <section className="mx-auto max-w-6xl px-4 pb-14">
+      <section className="mx-auto max-w-6xl px-4 py-10">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-bold">Stok Terbaru</h2>
           <Link href="/motor" className="text-sm text-rose-600 hover:underline">
@@ -92,6 +83,15 @@ export default async function Home() {
             <MotorCard key={m.id} motor={m} />
           ))}
         </div>
+      </section>
+
+      {/* AI Search */}
+      <section className="mx-auto max-w-6xl px-4 pb-14">
+        <h2 className="mb-1 text-xl font-bold">Cari Motor dengan AI ✨</h2>
+        <p className="mb-4 text-sm text-zinc-500">
+          Ketik kebutuhan Anda dengan bahasa sehari-hari.
+        </p>
+        <AISearchBar />
       </section>
 
       {/* Didukung Oleh (partner leasing) */}
