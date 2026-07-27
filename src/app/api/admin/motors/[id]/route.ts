@@ -1,5 +1,5 @@
 import { getSupabaseAdmin } from "@/lib/supabase";
-import { motorInputSchema } from "@/lib/motor-schema";
+import { motorInputSchema, slugify } from "@/lib/motor-schema";
 
 export async function PATCH(
   req: Request,
@@ -24,7 +24,7 @@ export async function PATCH(
   }
 
   const input = parsed.data;
-  const slug = input.slug && input.slug.trim() ? input.slug.trim() : undefined;
+  const slug = input.slug ? slugify(input.slug) : undefined;
 
   const { data, error } = await admin
     .from("motors")

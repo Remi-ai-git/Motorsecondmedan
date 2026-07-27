@@ -46,13 +46,24 @@ export const motorInputSchema = z
 
 export type MotorInput = z.infer<typeof motorInputSchema>;
 
-/** Slug URL-safe dari brand + model + tahun + suffix acak (biar unik). */
-export function generateSlug(brand: string, model: string, year: number): string {
-  const base = `${brand}-${model}-${year}`
+/**
+ * Rapikan string bebas jadi slug URL-safe (lowercase, spasi/simbol jadi "-").
+ * Dipakai untuk slug custom yang diketik admin, supaya tidak ada spasi atau
+ * karakter aneh yang bikin halaman detail 404 (pernah kejadian: admin ketik
+ * "NMAX Keren Test" apa adanya di kolom Slug URL, hasilnya /motor/NMAX%20...
+ * tidak bisa diakses).
+ */
+export function slugify(text: string): string {
+  return text
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
+}
+
+/** Slug URL-safe dari brand + model + tahun + suffix acak (biar unik). */
+export function generateSlug(brand: string, model: string, year: number): string {
+  const base = slugify(`${brand}-${model}-${year}`);
   const suffix = Math.random().toString(36).slice(2, 6);
   return `${base}-${suffix}`;
 }

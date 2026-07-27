@@ -1,5 +1,5 @@
 import { getSupabaseAdmin } from "@/lib/supabase";
-import { motorInputSchema, generateSlug } from "@/lib/motor-schema";
+import { motorInputSchema, generateSlug, slugify } from "@/lib/motor-schema";
 
 export async function POST(req: Request) {
   const admin = getSupabaseAdmin();
@@ -20,10 +20,8 @@ export async function POST(req: Request) {
   }
 
   const input = parsed.data;
-  const slug =
-    input.slug && input.slug.trim()
-      ? input.slug.trim()
-      : generateSlug(input.brand, input.model, input.year);
+  const customSlug = input.slug ? slugify(input.slug) : "";
+  const slug = customSlug || generateSlug(input.brand, input.model, input.year);
 
   const { data, error } = await admin
     .from("motors")

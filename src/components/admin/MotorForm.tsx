@@ -439,6 +439,10 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
         <div>
           <label className={labelClass}>Slug URL (opsional, otomatis kalau kosong)</label>
           <input className={inputClass} value={form.slug} onChange={(e) => set("slug", e.target.value)} placeholder="honda-beat-2022-hitam" />
+          <p className="mt-1 text-xs text-zinc-400">
+            Boleh diketik bebas (misal &quot;NMAX Keren&quot;) — sistem otomatis
+            merapikan jadi format URL (huruf kecil, spasi jadi tanda hubung).
+          </p>
         </div>
       </section>
 
