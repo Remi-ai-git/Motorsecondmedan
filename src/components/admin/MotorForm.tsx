@@ -10,6 +10,7 @@ import {
   OTHER_BRAND_OPTION,
   modelsForBrand,
 } from "@/lib/motor-model-catalog";
+import { typesForModel } from "@/lib/motor-type-catalog";
 
 /** Brand yang tersimpan di DB -> pilihan dropdown ("Lainnya" kalau tidak dikenal). */
 function brandToChoice(brand: string): string {
@@ -88,6 +89,16 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
     !isOtherBrand &&
     form.model.trim() !== "" &&
     !modelOptions.some((m) => m.toUpperCase() === form.model.trim().toUpperCase());
+
+  // Daftar Type tergantung Brand+Model yang dipilih. Kalau kombinasinya
+  // belum terdaftar (model baru/brand "Lainnya"), fallback ke input bebas.
+  const typeOptions =
+    !isOtherBrand && form.model.trim() !== "" ? typesForModel(brandChoice, form.model) : [];
+  const hasTypeOptions = typeOptions.length > 0;
+  const currentTypeUnknown =
+    hasTypeOptions &&
+    form.variant.trim() !== "" &&
+    !typeOptions.some((t) => t.toUpperCase() === form.variant.trim().toUpperCase());
 
   function handleBrandChoice(choice: string) {
     setBrandChoice(choice);
@@ -302,7 +313,10 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
               required
               className={inputClass}
               value={form.model}
-              onChange={(e) => set("model", e.target.value)}
+              onChange={(e) => {
+                set("model", e.target.value);
+                set("variant", ""); // reset Type tiap ganti model supaya tidak nyangkut Type model lama
+              }}
             >
               <option value="" disabled>
                 -- Pilih model --
@@ -319,12 +333,39 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
           )}
           <p className="mt-1 text-xs text-zinc-400">
             Daftar model sesuai tabel resmi leasing — supaya perhitungan kredit
-            (PGI) akurat. Detail trim/varian diisi di kolom Varian.
+            (PGI) akurat. Detail trim diisi di kolom Type.
           </p>
         </div>
         <div>
-          <label className={labelClass}>Varian</label>
-          <input className={inputClass} value={form.variant} onChange={(e) => set("variant", e.target.value)} placeholder="Street / CBS / dll" />
+          <label className={labelClass}>Type</label>
+          {hasTypeOptions ? (
+            <select
+              className={inputClass}
+              value={form.variant}
+              onChange={(e) => set("variant", e.target.value)}
+            >
+              <option value="">-- Pilih type (opsional) --</option>
+              {currentTypeUnknown && (
+                <option value={form.variant}>{form.variant} (data lama — pilih ulang)</option>
+              )}
+              {typeOptions.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              className={inputClass}
+              value={form.variant}
+              onChange={(e) => set("variant", e.target.value)}
+              placeholder={
+                form.model.trim() === ""
+                  ? "Pilih Model dulu, atau ketik bebas"
+                  : "Belum ada daftar Type untuk model ini — ketik bebas"
+              }
+            />
+          )}
         </div>
         <div>
           <label className={labelClass}>Kategori *</label>
@@ -353,14 +394,6 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
         <div>
           <label className={labelClass}>Kilometer *</label>
           <input required type="number" className={inputClass} value={form.km} onChange={(e) => set("km", e.target.value)} />
-        </div>
-        <div>
-          <label className={labelClass}>Kapasitas mesin (cc)</label>
-          <input type="number" className={inputClass} value={form.engine_cc} onChange={(e) => set("engine_cc", e.target.value)} />
-        </div>
-        <div>
-          <label className={labelClass}>Konsumsi BBM (km/liter)</label>
-          <input type="number" className={inputClass} value={form.fuel_consumption_kml} onChange={(e) => set("fuel_consumption_kml", e.target.value)} />
         </div>
         <div>
           <label className={labelClass}>Kondisi *</label>
