@@ -3,6 +3,8 @@ import { generateObject } from "ai";
 import { z } from "zod";
 import { getSupabase } from "@/lib/supabase";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { computeMotorCreditSummary } from "@/lib/credit-calc";
+import type { CreditSettings, Motor } from "@/lib/types";
 
 export const maxDuration = 15;
 
@@ -90,5 +92,23 @@ export async function POST(req: Request) {
     data = res.data;
   }
 
-  return Response.json({ filters: f, results: data ?? [] });
+  // Tempel ringkasan "DP mulai" / "Cicilan mulai" per motor, sama seperti di
+  // katalog & homepage, supaya hasil pencarian AI juga konsisten.
+  const { data: settingsData } = await supabase
+    .from("credit_settings")
+    .select("*")
+    .eq("id", true)
+    .single();
+  const settings = settingsData as CreditSettings | null;
+
+  const results = ((data as Motor[]) ?? []).map((m) => {
+    const summary = settings ? computeMotorCreditSummary(m, settings) : null;
+    return {
+      ...m,
+      dp_minimal: summary?.dp_minimal ?? null,
+      cicilan_mulai: summary?.cicilan_mulai ?? null,
+    };
+  });
+
+  return Response.json({ filters: f, results });
 }

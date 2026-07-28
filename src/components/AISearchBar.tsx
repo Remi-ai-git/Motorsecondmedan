@@ -4,6 +4,11 @@ import { useState } from "react";
 import MotorCard from "@/components/MotorCard";
 import type { Motor } from "@/lib/types";
 
+type MotorResult = Motor & {
+  dp_minimal?: number | null;
+  cicilan_mulai?: number | null;
+};
+
 const EXAMPLES = [
   "Motor Beat di bawah 18 juta",
   "NMAX tahun 2023",
@@ -13,7 +18,7 @@ const EXAMPLES = [
 
 export default function AISearchBar() {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<Motor[] | null>(null);
+  const [results, setResults] = useState<MotorResult[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -91,7 +96,12 @@ export default function AISearchBar() {
           </p>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {results.map((m) => (
-              <MotorCard key={m.id} motor={m} />
+              <MotorCard
+                key={m.id}
+                motor={m}
+                dpMinimal={m.dp_minimal}
+                cicilanMulai={m.cicilan_mulai}
+              />
             ))}
           </div>
         </div>

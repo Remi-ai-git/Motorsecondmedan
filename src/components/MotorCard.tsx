@@ -9,7 +9,15 @@ const categoryColors: Record<string, string> = {
   touring: "bg-violet-100 text-violet-700",
 };
 
-export default function MotorCard({ motor }: { motor: Motor }) {
+export default function MotorCard({
+  motor,
+  dpMinimal,
+  cicilanMulai,
+}: {
+  motor: Motor;
+  dpMinimal?: number | null;
+  cicilanMulai?: number | null;
+}) {
   return (
     <Link
       href={`/motor/${motor.slug}`}
@@ -56,6 +64,17 @@ export default function MotorCard({ motor }: { motor: Motor }) {
           <p className="inline-block rounded bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
             🎁 {motor.promo}
           </p>
+        )}
+        {dpMinimal != null && cicilanMulai != null && (
+          <div className="rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs text-emerald-800">
+            <p>
+              DP mulai <span className="font-semibold">{formatRupiah(dpMinimal)}</span>
+            </p>
+            <p>
+              Cicilan mulai{" "}
+              <span className="font-semibold">{formatRupiah(cicilanMulai)}</span>/bulan
+            </p>
+          </div>
         )}
       </div>
     </Link>

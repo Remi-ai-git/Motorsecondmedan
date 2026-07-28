@@ -130,3 +130,44 @@ export function simulateCredit({ motor, settings, dpInput }: SimulateCreditInput
     rows,
   };
 }
+
+export interface MotorCreditSummary {
+  dp_minimal: number;
+  cicilan_mulai: number;
+}
+
+/**
+ * Ringkasan kredit singkat untuk kartu katalog ("DP mulai Rp X" / "Cicilan
+ * mulai Rp Y/bulan"). DP minimal = DP tunai terkecil yang perlu dibayar
+ * pembeli agar memenuhi min_dp_percent, setelah subsidi/surcharge dp_discount
+ * motor (diatur admin). Cicilan mulai = angsuran terendah di antara semua
+ * tenor pada DP minimal tsb — biasanya tenor terpanjang.
+ *
+ * Mengembalikan null kalau harga motor belum ada atau tarif sedang tidak
+ * berlaku (effective_until sudah lewat), supaya tidak menampilkan angka yang
+ * salah/kedaluwarsa ke pembeli.
+ */
+export function computeMotorCreditSummary(
+  motor: Pick<Motor, "model" | "variant" | "price" | "dp_discount">,
+  settings: CreditSettings
+): MotorCreditSummary | null {
+  if (!motor.price || motor.price <= 0) return null;
+  if (settings.effective_until && new Date(settings.effective_until) < new Date()) {
+    return null;
+  }
+
+  const dpDiscount = motor.dp_discount ?? 0;
+  const dpMinimal = Math.max(
+    0,
+    Math.ceil((motor.price * settings.min_dp_percent - dpDiscount) / 1000) * 1000
+  );
+
+  try {
+    const result = simulateCredit({ motor, settings, dpInput: dpMinimal });
+    if (result.rows.length === 0) return null;
+    const cicilanMulai = Math.min(...result.rows.map((r) => r.monthly_installment));
+    return { dp_minimal: dpMinimal, cicilan_mulai: cicilanMulai };
+  } catch {
+    return null;
+  }
+}

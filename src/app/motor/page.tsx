@@ -1,7 +1,8 @@
 import { getSupabase } from "@/lib/supabase";
 import MotorCard from "@/components/MotorCard";
 import AISearchBar from "@/components/AISearchBar";
-import type { Motor } from "@/lib/types";
+import type { CreditSettings, Motor } from "@/lib/types";
+import { computeMotorCreditSummary } from "@/lib/credit-calc";
 import Link from "next/link";
 
 export const revalidate = 60;
@@ -23,8 +24,12 @@ export default async function KatalogPage({
     .order("price");
   if (kategori && kategori !== "semua") q = q.eq("category", kategori);
 
-  const { data } = await q;
+  const [{ data }, { data: settingsData }] = await Promise.all([
+    q,
+    supabase.from("credit_settings").select("*").eq("id", true).single(),
+  ]);
   const motors = (data as Motor[]) ?? [];
+  const settings = settingsData as CreditSettings | null;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
@@ -54,9 +59,17 @@ export default async function KatalogPage({
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {motors.map((m) => (
-          <MotorCard key={m.id} motor={m} />
-        ))}
+        {motors.map((m) => {
+          const summary = settings ? computeMotorCreditSummary(m, settings) : null;
+          return (
+            <MotorCard
+              key={m.id}
+              motor={m}
+              dpMinimal={summary?.dp_minimal}
+              cicilanMulai={summary?.cicilan_mulai}
+            />
+          );
+        })}
       </div>
 
       {motors.length === 0 && (
