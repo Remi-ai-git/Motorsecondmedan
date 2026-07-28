@@ -14,7 +14,7 @@ export default async function Home() {
     .select("*")
     .eq("status", "tersedia")
     .order("created_at", { ascending: false })
-    .limit(6);
+    .limit(9);
 
   const motors = (data as Motor[]) ?? [];
 
