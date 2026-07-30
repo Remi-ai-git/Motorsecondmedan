@@ -35,7 +35,10 @@ type FormState = {
   tax_status: (typeof TAX_STATUS_OPTIONS)[number];
   tax_expiry: string;
   stnk: boolean;
+  stnk_expiry: string;
   bpkb: boolean;
+  plat_expiry: string;
+  faktur: boolean;
   status: (typeof STATUS_OPTIONS)[number];
   promo: string;
   description: string;
@@ -62,7 +65,10 @@ function toFormState(m?: Motor): FormState {
     tax_status: m?.tax_status ?? "hidup",
     tax_expiry: m?.tax_expiry ?? "",
     stnk: m?.stnk ?? true,
+    stnk_expiry: m?.stnk_expiry ?? "",
     bpkb: m?.bpkb ?? true,
+    plat_expiry: m?.plat_expiry ?? "",
+    faktur: m?.faktur ?? false,
     status: m?.status ?? "tersedia",
     promo: m?.promo ?? "",
     description: m?.description ?? "",
@@ -179,7 +185,10 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
       tax_status: form.tax_status,
       tax_expiry: form.tax_expiry || null,
       stnk: form.stnk,
+      stnk_expiry: form.stnk_expiry || null,
       bpkb: form.bpkb,
+      plat_expiry: form.plat_expiry || null,
+      faktur: form.faktur,
       status: form.status,
       promo: form.promo || null,
       description: form.description || null,
@@ -419,6 +428,14 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
           <label className={labelClass}>Pajak s/d (opsional)</label>
           <input type="date" className={inputClass} value={form.tax_expiry} onChange={(e) => set("tax_expiry", e.target.value)} />
         </div>
+        <div>
+          <label className={labelClass}>STNK s/d (opsional)</label>
+          <input type="date" className={inputClass} value={form.stnk_expiry} onChange={(e) => set("stnk_expiry", e.target.value)} />
+        </div>
+        <div>
+          <label className={labelClass}>Plat s/d (opsional)</label>
+          <input type="date" className={inputClass} value={form.plat_expiry} onChange={(e) => set("plat_expiry", e.target.value)} />
+        </div>
         <div className="flex items-center gap-4 pt-6">
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.stnk} onChange={(e) => set("stnk", e.target.checked)} />
@@ -427,6 +444,10 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.bpkb} onChange={(e) => set("bpkb", e.target.checked)} />
             BPKB
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={form.faktur} onChange={(e) => set("faktur", e.target.checked)} />
+            Faktur
           </label>
         </div>
         <div>

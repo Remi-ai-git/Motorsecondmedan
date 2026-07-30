@@ -26,23 +26,26 @@ export default async function Home() {
   return (
     <div>
       {/* Hero */}
-      <section className="overflow-hidden bg-zinc-900 py-16 text-white">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-8 px-4 lg:grid-cols-2">
+      <section className="overflow-hidden bg-zinc-900 py-6 text-white sm:py-16">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-4 px-4 sm:gap-8 lg:grid-cols-2">
           <div>
-            <h1 className="max-w-2xl text-3xl font-bold leading-tight sm:text-4xl">
+            <h1 className="max-w-2xl text-xl font-bold leading-tight sm:text-4xl">
               Motor Bekas Berkualitas,{" "}
               <span className="text-rose-500">Surat Lengkap</span>, Harga
-              Jujur.
+              Jujur dan Bergaransi.
             </h1>
-            <p className="mt-3 max-w-xl text-zinc-300">
+            <p className="mt-1 text-sm font-semibold text-rose-400 sm:mt-2 sm:text-base">
+              Cash &amp; Kredit
+            </p>
+            <p className="mt-2 max-w-xl text-xs text-zinc-300 sm:mt-3 sm:text-base">
               Arta Motor Medan — semua unit lolos inspeksi, garansi mesin 1
               bulan, bisa kredit &amp; tukar tambah. Bingung pilih motor?
-              Tanya asisten AI kami lewat tombol 💬 di pojok kanan bawah.
+              Tanya Marketing kami lewat tombol Whatsapp di pojok kanan bawah.
             </p>
-            <div className="mt-6 flex gap-3">
+            <div className="mt-3 flex gap-2 sm:mt-6 sm:gap-3">
               <Link
                 href="/motor"
-                className="rounded-full bg-rose-600 px-5 py-2.5 text-sm font-medium hover:bg-rose-700"
+                className="rounded-full bg-rose-600 px-4 py-2 text-xs font-medium hover:bg-rose-700 sm:px-5 sm:py-2.5 sm:text-sm"
               >
                 Lihat Katalog
               </Link>
@@ -50,9 +53,9 @@ export default async function Home() {
                 href={`https://wa.me/${process.env.NEXT_PUBLIC_WA_NUMBER}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-full border border-zinc-600 px-5 py-2.5 text-sm font-medium hover:bg-zinc-800"
+                className="rounded-full border border-zinc-600 px-4 py-2 text-xs font-medium hover:bg-zinc-800 sm:px-5 sm:py-2.5 sm:text-sm"
               >
-                Chat Sales
+                WhatsApp Marketing
               </a>
             </div>
           </div>
@@ -95,6 +98,14 @@ export default async function Home() {
               />
             );
           })}
+        </div>
+        <div className="mt-6 flex justify-center">
+          <Link
+            href="/motor"
+            className="rounded-full border border-rose-600 px-6 py-2.5 text-sm font-medium text-rose-600 transition hover:bg-rose-600 hover:text-white"
+          >
+            Lihat Semua Produk
+          </Link>
         </div>
       </section>
 

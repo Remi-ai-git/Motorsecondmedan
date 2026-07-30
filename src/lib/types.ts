@@ -16,7 +16,10 @@ export interface Motor {
   tax_status: "hidup" | "mati";
   tax_expiry: string | null;
   stnk: boolean;
+  stnk_expiry: string | null;
   bpkb: boolean;
+  plat_expiry: string | null;
+  faktur: boolean;
   status: "tersedia" | "booking" | "terjual";
   promo: string | null;
   description: string | null;

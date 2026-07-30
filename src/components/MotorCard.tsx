@@ -66,7 +66,7 @@ export default function MotorCard({
             </div>
           )}
           <p className="text-xs text-zinc-500">
-            {motor.year} · Masa Berlaku Pajak:{" "}
+            {motor.year} · {motor.km.toLocaleString("id-ID")} km · Masa Berlaku Pajak:{" "}
             {motor.tax_expiry
               ? new Date(motor.tax_expiry).toLocaleDateString("id-ID", {
                   day: "numeric",

@@ -28,30 +28,40 @@ export default async function MotorDetailPage({
     `Halo Arta Motor, saya tertarik dengan ${motor.brand} ${motor.model} ${motor.year} (${formatRupiah(motor.price)}). Apakah masih tersedia?`
   );
 
+  const formatDate = (value: string | null) =>
+    value
+      ? new Date(value).toLocaleDateString("id-ID", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })
+      : "-";
+
   const specs: [string, string][] = [
     ["Merek", motor.brand],
     ["Model", `${motor.model}${motor.variant ? ` ${motor.variant}` : ""}`],
     ["Kategori", motor.category],
     ["Tahun", String(motor.year)],
-    ["Kapasitas mesin", motor.engine_cc ? `${motor.engine_cc} cc` : "-"],
     [
       "Konsumsi BBM",
       motor.fuel_consumption_kml ? `±${motor.fuel_consumption_kml} km/liter` : "-",
     ],
-    ["Kondisi", motor.condition_note ?? motor.condition],
     [
       "Masa Berlaku Pajak",
       motor.tax_expiry
-        ? new Date(motor.tax_expiry).toLocaleDateString("id-ID", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-          })
+        ? formatDate(motor.tax_expiry)
         : motor.tax_status === "hidup"
           ? "Hidup"
           : "Mati",
     ],
-    ["Surat", [motor.stnk && "STNK", motor.bpkb && "BPKB"].filter(Boolean).join(" + ") || "-"],
+    ["Masa Berlaku STNK", formatDate(motor.stnk_expiry)],
+    ["Masa Berlaku Plat", formatDate(motor.plat_expiry)],
+    [
+      "Surat",
+      [motor.stnk && "STNK", motor.bpkb && "BPKB", motor.faktur && "Faktur"]
+        .filter(Boolean)
+        .join(" + ") || "-",
+    ],
     ["Status", motor.status],
   ];
 
