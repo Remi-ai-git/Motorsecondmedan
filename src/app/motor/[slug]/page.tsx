@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getSupabase } from "@/lib/supabase";
-import { formatRupiah, type Motor } from "@/lib/types";
+import { formatRupiah, type CreditSettings, type Motor } from "@/lib/types";
+import { computeMotorCreditSummary } from "@/lib/credit-calc";
 import MotorGallery from "@/components/MotorGallery";
 import CreditSimulatorWidget from "@/components/CreditSimulatorWidget";
 
@@ -13,14 +14,15 @@ export default async function MotorDetailPage({
 }) {
   const { slug } = await params;
   const supabase = getSupabase();
-  const { data } = await supabase
-    .from("motors")
-    .select("*")
-    .eq("slug", slug)
-    .single();
+  const [{ data }, { data: settingsData }] = await Promise.all([
+    supabase.from("motors").select("*").eq("slug", slug).single(),
+    supabase.from("credit_settings").select("*").eq("id", true).single(),
+  ]);
 
   if (!data) notFound();
   const motor = data as Motor;
+  const settings = settingsData as CreditSettings | null;
+  const creditSummary = settings ? computeMotorCreditSummary(motor, settings) : null;
   const wa = process.env.NEXT_PUBLIC_WA_NUMBER;
   const waText = encodeURIComponent(
     `Halo Arta Motor, saya tertarik dengan ${motor.brand} ${motor.model} ${motor.year} (${formatRupiah(motor.price)}). Apakah masih tersedia?`
@@ -31,8 +33,6 @@ export default async function MotorDetailPage({
     ["Model", `${motor.model}${motor.variant ? ` ${motor.variant}` : ""}`],
     ["Kategori", motor.category],
     ["Tahun", String(motor.year)],
-    ["Kilometer", `${motor.km.toLocaleString("id-ID")} km`],
-    ["Warna", motor.color],
     ["Kapasitas mesin", motor.engine_cc ? `${motor.engine_cc} cc` : "-"],
     [
       "Konsumsi BBM",
@@ -40,10 +40,16 @@ export default async function MotorDetailPage({
     ],
     ["Kondisi", motor.condition_note ?? motor.condition],
     [
-      "Pajak",
-      motor.tax_status === "hidup"
-        ? `Hidup${motor.tax_expiry ? ` (s/d ${motor.tax_expiry})` : ""}`
-        : "Mati",
+      "Masa Berlaku Pajak",
+      motor.tax_expiry
+        ? new Date(motor.tax_expiry).toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })
+        : motor.tax_status === "hidup"
+          ? "Hidup"
+          : "Mati",
     ],
     ["Surat", [motor.stnk && "STNK", motor.bpkb && "BPKB"].filter(Boolean).join(" + ") || "-"],
     ["Status", motor.status],
@@ -73,6 +79,21 @@ export default async function MotorDetailPage({
           <p className="mt-1 text-3xl font-bold text-rose-600">
             {formatRupiah(motor.price)}
           </p>
+          {creditSummary && (
+            <div className="mt-2 inline-block rounded-lg bg-emerald-50 px-3 py-2 text-[15px] text-emerald-800">
+              <p>
+                DP mulai{" "}
+                <span className="font-semibold">{formatRupiah(creditSummary.dp_minimal)}</span>
+              </p>
+              <p>
+                Cicilan mulai{" "}
+                <span className="font-semibold">
+                  {formatRupiah(creditSummary.cicilan_mulai)}
+                </span>
+                /bulan
+              </p>
+            </div>
+          )}
           {motor.promo && (
             <p className="mt-2 inline-block rounded bg-amber-50 px-3 py-1 text-sm font-medium text-amber-700">
               🎁 {motor.promo}
