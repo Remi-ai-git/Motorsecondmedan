@@ -53,7 +53,7 @@ export default async function Home() {
                 href={`https://wa.me/${process.env.NEXT_PUBLIC_WA_NUMBER}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-full border border-zinc-600 px-4 py-2 text-xs font-medium hover:bg-zinc-800 sm:px-5 sm:py-2.5 sm:text-sm"
+                className="rounded-full bg-green-600 px-4 py-2 text-xs font-medium text-white hover:bg-green-700 sm:px-5 sm:py-2.5 sm:text-sm"
               >
                 WhatsApp Marketing
               </a>

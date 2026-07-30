@@ -90,7 +90,7 @@ export default async function MotorDetailPage({
             {formatRupiah(motor.price)}
           </p>
           {creditSummary && (
-            <div className="mt-2 inline-block rounded-lg bg-emerald-50 px-3 py-2 text-[15px] text-emerald-800">
+            <div className="mt-2 inline-block rounded-lg bg-rose-600 px-3 py-2 text-[18.75px] text-white">
               <p>
                 DP mulai{" "}
                 <span className="font-semibold">{formatRupiah(creditSummary.dp_minimal)}</span>

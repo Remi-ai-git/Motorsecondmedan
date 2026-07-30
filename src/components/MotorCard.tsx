@@ -55,7 +55,7 @@ export default function MotorCard({
             {formatRupiah(motor.price)}
           </p>
           {dpMinimal != null && cicilanMulai != null && (
-            <div className="rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[15px] text-emerald-800">
+            <div className="rounded-lg bg-rose-600 px-2.5 py-1.5 text-[18.75px] text-white">
               <p>
                 DP mulai <span className="font-semibold">{formatRupiah(dpMinimal)}</span>
               </p>
