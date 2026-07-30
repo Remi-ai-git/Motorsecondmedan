@@ -7,11 +7,17 @@ import type { PublicCreditSimulationResult } from "@/lib/types";
 export default function CreditSimulatorWidget({
   motorId,
   price,
+  defaultDp,
 }: {
   motorId: string;
   price: number;
+  /** DP minimal riil (dari credit_settings admin) — dipakai sebagai nilai awal
+   * input supaya perhitungan pertama tidak langsung gagal karena di bawah DP
+   * minimum. Kalau belum tersedia (settings/tarif belum ada), fallback ke
+   * taksiran kasar 15%. */
+  defaultDp?: number | null;
 }) {
-  const minDpGuess = Math.ceil((price * 0.15) / 100000) * 100000;
+  const minDpGuess = defaultDp ?? Math.ceil((price * 0.15) / 100000) * 100000;
   const [dp, setDp] = useState(String(minDpGuess));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -38,7 +44,7 @@ export default function CreditSimulatorWidget({
   }
 
   return (
-    <div className="mt-8 rounded-2xl border border-zinc-200 bg-white p-5">
+    <div id="kredit" className="mt-8 rounded-2xl border border-zinc-200 bg-white p-5">
       <h2 className="text-lg font-bold">📊 Taksasi Perhitungan Kredit</h2>
       <p className="mt-1 text-sm text-zinc-500">
         Masukkan DP yang kamu inginkan untuk melihat simulasi angsuran bulanan.
@@ -52,13 +58,18 @@ export default function CreditSimulatorWidget({
           </label>
           <input
             type="number"
-            min={0}
+            min={defaultDp ?? 0}
             step={100000}
             value={dp}
             onChange={(e) => setDp(e.target.value)}
             className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-rose-500"
             placeholder="Contoh: 5000000"
           />
+          {defaultDp != null && (
+            <p className="mt-1 text-xs text-zinc-400">
+              DP minimal: {formatRupiah(defaultDp)}
+            </p>
+          )}
         </div>
         <button
           onClick={hitung}

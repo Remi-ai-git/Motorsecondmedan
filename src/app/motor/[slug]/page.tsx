@@ -114,6 +114,12 @@ export default async function MotorDetailPage({
         <p className="mt-6 text-zinc-700">{motor.description}</p>
       )}
 
+      <CreditSimulatorWidget
+        motorId={motor.id}
+        price={motor.price}
+        defaultDp={creditSummary?.dp_minimal}
+      />
+
       <h2 className="mb-3 mt-8 text-lg font-bold">Spesifikasi</h2>
       <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
         {specs.map(([label, value], i) => (
@@ -126,8 +132,6 @@ export default async function MotorDetailPage({
           </div>
         ))}
       </div>
-
-      <CreditSimulatorWidget motorId={motor.id} price={motor.price} />
 
       <p className="mt-6 rounded-xl bg-sky-50 p-4 text-sm text-sky-800">
         💬 Mau bandingkan dengan motor lain atau tanya kelengkapan surat? Tanya
