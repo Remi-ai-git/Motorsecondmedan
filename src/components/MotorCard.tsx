@@ -56,15 +56,6 @@ export default function MotorCard({
         <p className="text-lg font-bold text-rose-600">
           {formatRupiah(motor.price)}
         </p>
-        <p className="text-xs text-zinc-500">
-          {motor.year} · {motor.km.toLocaleString("id-ID")} km · {motor.color} ·
-          Pajak {motor.tax_status}
-        </p>
-        {motor.promo && (
-          <p className="inline-block rounded bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-            🎁 {motor.promo}
-          </p>
-        )}
         {dpMinimal != null && cicilanMulai != null && (
           <div className="rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs text-emerald-800">
             <p>
@@ -75,6 +66,23 @@ export default function MotorCard({
               <span className="font-semibold">{formatRupiah(cicilanMulai)}</span>/bulan
             </p>
           </div>
+        )}
+        <p className="text-xs text-zinc-500">
+          {motor.year} · Masa Berlaku Pajak:{" "}
+          {motor.tax_expiry
+            ? new Date(motor.tax_expiry).toLocaleDateString("id-ID", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })
+            : motor.tax_status === "hidup"
+              ? "Hidup"
+              : "Mati"}
+        </p>
+        {motor.promo && (
+          <p className="inline-block rounded bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+            🎁 {motor.promo}
+          </p>
         )}
       </div>
     </Link>
