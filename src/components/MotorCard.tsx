@@ -74,15 +74,7 @@ export default function MotorCard({
         <div className="space-y-2 p-4 pt-3">
           <p className="text-xs text-zinc-500">
             {motor.year} · {motor.km.toLocaleString("id-ID")} km · Masa Berlaku Pajak:{" "}
-            {motor.tax_expiry
-              ? new Date(motor.tax_expiry).toLocaleDateString("id-ID", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                })
-              : motor.tax_status === "hidup"
-                ? "Hidup"
-                : "Mati"}
+            {motor.tax_expiry || "-"}
           </p>
           {motor.promo && (
             <p className="inline-block rounded bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">

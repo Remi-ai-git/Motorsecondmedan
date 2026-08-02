@@ -37,10 +37,7 @@ export default async function MotorDetailPage({
       "Konsumsi BBM",
       motor.fuel_consumption_kml ? `±${motor.fuel_consumption_kml} km/liter` : "-",
     ],
-    [
-      "Masa Berlaku Pajak",
-      motor.tax_expiry || (motor.tax_status === "hidup" ? "Hidup" : "Mati"),
-    ],
+    ["Masa Berlaku Pajak", motor.tax_expiry || "-"],
     ["Masa Berlaku STNK", motor.stnk_expiry || "-"],
     [
       "Surat",
