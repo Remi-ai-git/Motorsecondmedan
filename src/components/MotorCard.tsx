@@ -55,16 +55,23 @@ export default function MotorCard({
             {formatRupiah(motor.price)}
           </p>
           {dpMinimal != null && cicilanMulai != null && (
-            <div className="rounded-lg bg-rose-600 px-2.5 py-1.5 text-[18.75px] text-white">
-              <p>
-                DP mulai <span className="font-semibold">{formatRupiah(dpMinimal)}</span>
-              </p>
-              <p>
-                Cicilan mulai{" "}
-                <span className="font-semibold">{formatRupiah(cicilanMulai)}</span>/bulan
-              </p>
+            <div className="text-base font-semibold text-rose-600">
+              <p>DP mulai {formatRupiah(dpMinimal)}</p>
+              <p>Cicilan mulai {formatRupiah(cicilanMulai)}/bulan</p>
             </div>
           )}
+        </div>
+      </Link>
+      <div className="px-4 pt-2">
+        <Link
+          href={`/motor/${motor.slug}#kredit`}
+          className="block w-full rounded-full border border-rose-600 px-4 py-2 text-center text-sm font-medium text-rose-600 transition hover:bg-rose-600 hover:text-white"
+        >
+          Hitung Kredit
+        </Link>
+      </div>
+      <Link href={`/motor/${motor.slug}`} className="block">
+        <div className="space-y-2 p-4 pt-3">
           <p className="text-xs text-zinc-500">
             {motor.year} · {motor.km.toLocaleString("id-ID")} km · Masa Berlaku Pajak:{" "}
             {motor.tax_expiry
@@ -84,14 +91,6 @@ export default function MotorCard({
           )}
         </div>
       </Link>
-      <div className="p-4 pt-3">
-        <Link
-          href={`/motor/${motor.slug}#kredit`}
-          className="block w-full rounded-full border border-rose-600 px-4 py-2 text-center text-sm font-medium text-rose-600 transition hover:bg-rose-600 hover:text-white"
-        >
-          Hitung Kredit
-        </Link>
-      </div>
     </div>
   );
 }

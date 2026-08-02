@@ -90,18 +90,9 @@ export default async function MotorDetailPage({
             {formatRupiah(motor.price)}
           </p>
           {creditSummary && (
-            <div className="mt-2 inline-block rounded-lg bg-rose-600 px-3 py-2 text-[18.75px] text-white">
-              <p>
-                DP mulai{" "}
-                <span className="font-semibold">{formatRupiah(creditSummary.dp_minimal)}</span>
-              </p>
-              <p>
-                Cicilan mulai{" "}
-                <span className="font-semibold">
-                  {formatRupiah(creditSummary.cicilan_mulai)}
-                </span>
-                /bulan
-              </p>
+            <div className="mt-2 text-base font-semibold text-rose-600">
+              <p>DP mulai {formatRupiah(creditSummary.dp_minimal)}</p>
+              <p>Cicilan mulai {formatRupiah(creditSummary.cicilan_mulai)}/bulan</p>
             </div>
           )}
           {motor.promo && (
