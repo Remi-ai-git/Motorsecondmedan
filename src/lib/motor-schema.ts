@@ -22,7 +22,6 @@ export const motorInputSchema = z
   stnk: z.coerce.boolean().default(false),
   stnk_expiry: z.string().optional().nullable(),
   bpkb: z.coerce.boolean().default(false),
-  plat_expiry: z.string().optional().nullable(),
   faktur: z.coerce.boolean().default(false),
   status: z.enum(["tersedia", "booking", "terjual"]),
   promo: z.string().optional().nullable(),

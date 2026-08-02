@@ -37,7 +37,6 @@ type FormState = {
   stnk: boolean;
   stnk_expiry: string;
   bpkb: boolean;
-  plat_expiry: string;
   faktur: boolean;
   status: (typeof STATUS_OPTIONS)[number];
   promo: string;
@@ -68,7 +67,6 @@ function toFormState(m?: Motor): FormState {
     stnk: m?.stnk ?? true,
     stnk_expiry: m?.stnk_expiry ?? "",
     bpkb: m?.bpkb ?? true,
-    plat_expiry: m?.plat_expiry ?? "",
     faktur: m?.faktur ?? false,
     status: m?.status ?? "tersedia",
     promo: m?.promo ?? "",
@@ -189,7 +187,6 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
       stnk: form.stnk,
       stnk_expiry: form.stnk_expiry || null,
       bpkb: form.bpkb,
-      plat_expiry: form.plat_expiry || null,
       faktur: form.faktur,
       status: form.status,
       promo: form.promo || null,
@@ -428,16 +425,22 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
           </select>
         </div>
         <div>
-          <label className={labelClass}>Pajak s/d (opsional)</label>
-          <input type="date" className={inputClass} value={form.tax_expiry} onChange={(e) => set("tax_expiry", e.target.value)} />
+          <label className={labelClass}>Masa berlaku pajak (opsional)</label>
+          <input
+            className={inputClass}
+            value={form.tax_expiry}
+            onChange={(e) => set("tax_expiry", e.target.value)}
+            placeholder="Bebas, contoh: 12 Agustus 2026"
+          />
         </div>
         <div>
-          <label className={labelClass}>STNK s/d (opsional)</label>
-          <input type="date" className={inputClass} value={form.stnk_expiry} onChange={(e) => set("stnk_expiry", e.target.value)} />
-        </div>
-        <div>
-          <label className={labelClass}>Plat s/d (opsional)</label>
-          <input type="date" className={inputClass} value={form.plat_expiry} onChange={(e) => set("plat_expiry", e.target.value)} />
+          <label className={labelClass}>Masa berlaku STNK (opsional)</label>
+          <input
+            className={inputClass}
+            value={form.stnk_expiry}
+            onChange={(e) => set("stnk_expiry", e.target.value)}
+            placeholder="Bebas, contoh: 2029"
+          />
         </div>
         <div className="flex items-center gap-4 pt-6">
           <label className="flex items-center gap-2 text-sm">

@@ -28,15 +28,6 @@ export default async function MotorDetailPage({
     `Halo Arta Motor, saya tertarik dengan ${motor.brand} ${motor.model} ${motor.year} (${formatRupiah(motor.price)}). Apakah masih tersedia?`
   );
 
-  const formatDate = (value: string | null) =>
-    value
-      ? new Date(value).toLocaleDateString("id-ID", {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-        })
-      : "-";
-
   const specs: [string, string][] = [
     ["Merek", motor.brand],
     ["Model", `${motor.model}${motor.variant ? ` ${motor.variant}` : ""}`],
@@ -48,14 +39,9 @@ export default async function MotorDetailPage({
     ],
     [
       "Masa Berlaku Pajak",
-      motor.tax_expiry
-        ? formatDate(motor.tax_expiry)
-        : motor.tax_status === "hidup"
-          ? "Hidup"
-          : "Mati",
+      motor.tax_expiry || (motor.tax_status === "hidup" ? "Hidup" : "Mati"),
     ],
-    ["Masa Berlaku STNK", formatDate(motor.stnk_expiry)],
-    ["Masa Berlaku Plat", formatDate(motor.plat_expiry)],
+    ["Masa Berlaku STNK", motor.stnk_expiry || "-"],
     [
       "Surat",
       [motor.stnk && "STNK", motor.bpkb && "BPKB", motor.faktur && "Faktur"]

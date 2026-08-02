@@ -18,7 +18,6 @@ export interface Motor {
   stnk: boolean;
   stnk_expiry: string | null;
   bpkb: boolean;
-  plat_expiry: string | null;
   faktur: boolean;
   status: "tersedia" | "booking" | "terjual";
   promo: string | null;
