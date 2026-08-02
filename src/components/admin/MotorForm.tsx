@@ -120,7 +120,7 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
     setForm((f) => ({ ...f, [key]: value }));
   }
 
-  const MAX_PHOTOS = 6;
+  const MAX_PHOTOS = 8;
 
   async function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
