@@ -97,7 +97,7 @@ export default async function MotorDetailPage({
         rel="noopener noreferrer"
         className="mt-4 inline-block rounded-full bg-green-600 px-6 py-3 text-xs font-medium text-white hover:bg-green-700 sm:text-base"
       >
-        Tanya / Nego via WhatsApp
+        Whatsapp
       </a>
 
       {motor.description && (
