@@ -94,8 +94,7 @@ export function simulateCredit({ motor, settings, dpInput }: SimulateCreditInput
 
   if (dpPercent < settings.min_dp_percent) {
     throw new CreditCalcError(
-      `DP kurang. Minimum DP adalah ${Math.round(settings.min_dp_percent * 100)}% dari harga OTR ` +
-        `(≈ Rp${Math.ceil((otr * settings.min_dp_percent - dpDiscount) / 1000) * 1000}).`
+      "DP anda Kurang, Silahkan Tingkatkan DP anda Sesuai DP Minimal yang tertera."
     );
   }
   if (dpEffective >= otr) {

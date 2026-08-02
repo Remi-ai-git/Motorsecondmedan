@@ -38,9 +38,16 @@ export default async function Home() {
               Cash &amp; Kredit
             </p>
             <p className="mt-2 max-w-xl text-xs text-zinc-300 sm:mt-3 sm:text-base">
-              Arta Motor Medan — semua unit lolos inspeksi, garansi mesin 1
-              bulan, bisa kredit &amp; tukar tambah. Bingung pilih motor?
-              Tanya Marketing kami lewat tombol Whatsapp di pojok kanan bawah.
+              Arta Motor Medan —{" "}
+              <a
+                href="https://maps.app.goo.gl/GVAX4Cp4jdmzZPq8A?g_st=aw"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-white"
+              >
+                Jl. Brig Jend. Zein Hamid No.1, Titi Kuning, Medan Johor,
+                Medan City, North Sumatra 20147
+              </a>
             </p>
             <div className="mt-3 flex gap-2 sm:mt-6 sm:gap-3">
               <Link
