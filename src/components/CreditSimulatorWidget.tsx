@@ -44,16 +44,12 @@ export default function CreditSimulatorWidget({
   }
 
   return (
-    <div id="kredit" className="mt-8 rounded-2xl border border-zinc-200 bg-white p-5">
-      <h2 className="text-lg font-bold">📊 Taksasi Perhitungan Kredit</h2>
-      <p className="mt-1 text-sm text-zinc-500">
-        Masukkan DP yang kamu inginkan untuk melihat simulasi angsuran bulanan.
-        Ini adalah taksiran, angsuran final ditentukan oleh leasing saat pengajuan.
-      </p>
+    <div id="kredit" className="mt-4 rounded-2xl border border-zinc-200 bg-white p-5">
+      <h2 className="text-[13.5px] font-bold sm:text-lg">📊 Taksasi Perhitungan Kredit</h2>
 
       <div className="mt-4 flex flex-wrap items-end gap-3">
         <div className="flex-1">
-          <label className="mb-1 block text-xs font-medium text-zinc-600">
+          <label className="mb-1 block text-[9px] font-medium text-zinc-600 sm:text-xs">
             DP (Rp)
           </label>
           <input
@@ -62,11 +58,11 @@ export default function CreditSimulatorWidget({
             step={100000}
             value={dp}
             onChange={(e) => setDp(e.target.value)}
-            className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-rose-500"
+            className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-[10.5px] outline-none focus:border-rose-500 sm:text-sm"
             placeholder="Contoh: 5000000"
           />
           {defaultDp != null && (
-            <p className="mt-1 text-xs text-zinc-400">
+            <p className="mt-1 text-[9px] text-zinc-400 sm:text-xs">
               DP minimal: {formatRupiah(defaultDp)}
             </p>
           )}
@@ -74,43 +70,22 @@ export default function CreditSimulatorWidget({
         <button
           onClick={hitung}
           disabled={loading || !dp}
-          className="rounded-full bg-rose-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-50"
+          className="rounded-full bg-rose-600 px-6 py-2.5 text-[10.5px] font-medium text-white hover:bg-rose-700 disabled:opacity-50 sm:text-sm"
         >
           {loading ? "Menghitung…" : "Hitung"}
         </button>
       </div>
 
       {error && (
-        <p className="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">{error}</p>
+        <p className="mt-3 rounded-lg bg-amber-50 p-3 text-[10.5px] text-amber-800 sm:text-sm">
+          {error}
+        </p>
       )}
 
       {result && (
         <div className="mt-5">
-          <div className="mb-3 grid grid-cols-2 gap-2 rounded-lg bg-zinc-50 p-3 text-sm sm:grid-cols-4">
-            <div>
-              <p className="text-xs text-zinc-500">OTR</p>
-              <p className="font-medium">{formatRupiah(result.otr)}</p>
-            </div>
-            <div>
-              <p className="text-xs text-zinc-500">DP Input</p>
-              <p className="font-medium">{formatRupiah(result.dp_input)}</p>
-            </div>
-            {result.dp_discount > 0 && (
-              <div>
-                <p className="text-xs text-zinc-500">Subsidi DP</p>
-                <p className="font-medium text-emerald-600">
-                  +{formatRupiah(result.dp_discount)}
-                </p>
-              </div>
-            )}
-            <div>
-              <p className="text-xs text-zinc-500">DP Efektif ({(result.dp_percent * 100).toFixed(1)}%)</p>
-              <p className="font-medium">{formatRupiah(result.dp_effective)}</p>
-            </div>
-          </div>
-
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[320px] text-sm">
+            <table className="w-full min-w-[280px] text-[10.5px] sm:text-sm">
               <thead>
                 <tr className="border-b border-zinc-200 text-left text-zinc-500">
                   <th className="py-2 pr-3">Tenor</th>
@@ -130,7 +105,7 @@ export default function CreditSimulatorWidget({
             </table>
           </div>
 
-          <details className="mt-3 text-xs text-zinc-500">
+          <details className="mt-3 text-[9px] text-zinc-500 sm:text-xs">
             <summary className="cursor-pointer select-none">
               Rincian komponen biaya (tenor {result.rows[0]?.tenor} bulan)
             </summary>
@@ -146,7 +121,7 @@ export default function CreditSimulatorWidget({
             )}
           </details>
 
-          <p className="mt-3 text-xs text-zinc-400">
+          <p className="mt-3 text-[9px] text-zinc-400 sm:text-xs">
             *Taksiran ini belum termasuk biaya notaris/survey yang mungkin
             berlaku sesuai kebijakan leasing.
           </p>

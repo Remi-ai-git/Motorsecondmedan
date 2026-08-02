@@ -63,53 +63,53 @@ export default async function MotorDetailPage({
         </div>
       )}
 
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">
-            {motor.brand} {motor.model}
-            {motor.variant ? ` ${motor.variant}` : ""} {motor.year}
-          </h1>
-          <p className="mt-1 text-3xl font-bold text-rose-600">
-            {formatRupiah(motor.price)}
+      <div>
+        <h1 className="text-lg font-bold sm:text-2xl">
+          {motor.brand} {motor.model}
+          {motor.variant ? ` ${motor.variant}` : ""} {motor.year}
+        </h1>
+        <p className="mt-1 text-[22.5px] font-bold text-rose-600 sm:text-3xl">
+          {formatRupiah(motor.price)}
+        </p>
+        {creditSummary && (
+          <div className="mt-2 text-xs font-semibold text-rose-600 sm:text-base">
+            <p>DP mulai {formatRupiah(creditSummary.dp_minimal)}</p>
+            <p>Cicilan mulai {formatRupiah(creditSummary.cicilan_mulai)}/bulan</p>
+          </div>
+        )}
+
+        <CreditSimulatorWidget
+          motorId={motor.id}
+          price={motor.price}
+          defaultDp={creditSummary?.dp_minimal}
+        />
+
+        {motor.promo && (
+          <p className="mt-4 inline-block rounded bg-amber-50 px-3 py-1 text-[10.5px] font-medium text-amber-700 sm:text-sm">
+            🎁 {motor.promo}
           </p>
-          {creditSummary && (
-            <div className="mt-2 text-base font-semibold text-rose-600">
-              <p>DP mulai {formatRupiah(creditSummary.dp_minimal)}</p>
-              <p>Cicilan mulai {formatRupiah(creditSummary.cicilan_mulai)}/bulan</p>
-            </div>
-          )}
-          {motor.promo && (
-            <p className="mt-2 inline-block rounded bg-amber-50 px-3 py-1 text-sm font-medium text-amber-700">
-              🎁 {motor.promo}
-            </p>
-          )}
-        </div>
-        <a
-          href={`https://wa.me/${wa}?text=${waText}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="rounded-full bg-green-600 px-6 py-3 font-medium text-white hover:bg-green-700"
-        >
-          Tanya / Nego via WhatsApp
-        </a>
+        )}
       </div>
 
+      <a
+        href={`https://wa.me/${wa}?text=${waText}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-4 inline-block rounded-full bg-green-600 px-6 py-3 text-xs font-medium text-white hover:bg-green-700 sm:text-base"
+      >
+        Tanya / Nego via WhatsApp
+      </a>
+
       {motor.description && (
-        <p className="mt-6 text-zinc-700">{motor.description}</p>
+        <p className="mt-6 text-xs text-zinc-700 sm:text-base">{motor.description}</p>
       )}
 
-      <CreditSimulatorWidget
-        motorId={motor.id}
-        price={motor.price}
-        defaultDp={creditSummary?.dp_minimal}
-      />
-
-      <h2 className="mb-3 mt-8 text-lg font-bold">Spesifikasi</h2>
+      <h2 className="mb-3 mt-8 text-[13.5px] font-bold sm:text-lg">Spesifikasi</h2>
       <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
         {specs.map(([label, value], i) => (
           <div
             key={label}
-            className={`flex justify-between px-4 py-2.5 text-sm ${i % 2 ? "bg-zinc-50" : ""}`}
+            className={`flex justify-between px-4 py-2.5 text-[10.5px] sm:text-sm ${i % 2 ? "bg-zinc-50" : ""}`}
           >
             <span className="text-zinc-500">{label}</span>
             <span className="font-medium capitalize">{value}</span>
@@ -117,7 +117,7 @@ export default async function MotorDetailPage({
         ))}
       </div>
 
-      <p className="mt-6 rounded-xl bg-sky-50 p-4 text-sm text-sky-800">
+      <p className="mt-6 rounded-xl bg-sky-50 p-4 text-[10.5px] text-sky-800 sm:text-sm">
         💬 Mau bandingkan dengan motor lain atau tanya kelengkapan surat? Tanya
         asisten AI kami lewat tombol chat di pojok kanan bawah.
       </p>
