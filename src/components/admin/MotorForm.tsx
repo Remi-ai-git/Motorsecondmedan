@@ -45,6 +45,7 @@ type FormState = {
   tags: string;
   images: string[];
   dp_discount: string;
+  dp_amount: string;
 };
 
 function toFormState(m?: Motor): FormState {
@@ -75,6 +76,7 @@ function toFormState(m?: Motor): FormState {
     tags: m?.tags?.join(", ") ?? "",
     images: m?.images ?? [],
     dp_discount: m ? String(m.dp_discount ?? 0) : "0",
+    dp_amount: m?.dp_amount != null ? String(m.dp_amount) : "",
   };
 }
 
@@ -198,6 +200,7 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
         .filter(Boolean),
       images: form.images,
       dp_discount: form.dp_discount ? Number(form.dp_discount) : 0,
+      dp_amount: form.dp_amount ? Number(form.dp_amount) : null,
     };
 
     try {
@@ -467,6 +470,25 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
           <input className={inputClass} value={form.promo} onChange={(e) => set("promo", e.target.value)} placeholder="Gratis servis 3x" />
         </div>
         <div>
+          <label className={labelClass}>DP untuk katalog (Rp)</label>
+          <input
+            type="number"
+            min={0}
+            className={inputClass}
+            value={form.dp_amount}
+            onChange={(e) => set("dp_amount", e.target.value)}
+            placeholder="Kosongkan untuk hitung otomatis dari % DP minimum"
+          />
+          <p className="mt-1 text-xs text-zinc-400">
+            Diproses lewat kalkulator kredit yang sama — hasilnya (DP efektif +
+            cicilan termurah) itulah yang tampil sebagai &quot;DP Minimal&quot; &amp;
+            &quot;Cicilan mulai&quot; di katalog. Kalau diisi di bawah DP minimum yang
+            diwajibkan (lihat halaman Settings kredit), kotak DP di katalog tidak
+            akan tampil. Kosongkan untuk pakai taksiran otomatis dari persentase DP
+            minimum.
+          </p>
+        </div>
+        <div>
           <label className={labelClass}>Subsidi/potongan DP (Rp)</label>
           <input
             type="number"
@@ -476,10 +498,11 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
             placeholder="0"
           />
           <p className="mt-1 text-xs text-zinc-400">
-            Ditambahkan ke DP yang diinput pembeli sebelum dihitung di simulasi
-            kredit. Isi positif untuk subsidi (contoh: DP input 5jt + subsidi 2jt
-            → dihitung seolah DP 7jt, angsuran lebih ringan). Isi negatif untuk
-            surcharge (mengurangi DP efektif, angsuran lebih berat).
+            Ditambahkan ke DP (baik DP katalog di atas maupun DP yang diinput
+            pembeli sendiri) sebelum dihitung di simulasi kredit. Isi positif
+            untuk subsidi (contoh: DP 5jt + subsidi 2jt → dihitung seolah DP
+            7jt, angsuran lebih ringan). Isi negatif untuk surcharge (mengurangi
+            DP efektif, angsuran lebih berat).
           </p>
         </div>
         <div>

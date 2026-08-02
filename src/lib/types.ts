@@ -27,6 +27,13 @@ export interface Motor {
   images: string[];
   /** Subsidi tambahan ke DP pembeli, diatur admin per motor (rupiah). */
   dp_discount: number;
+  /**
+   * DP yang diisi manual oleh admin (rupiah) — dipakai sebagai input ke
+   * kalkulator kredit untuk menentukan "DP Minimal" & "Cicilan mulai" yang
+   * tampil di katalog. Kalau kosong (null), sistem fallback ke taksiran
+   * otomatis dari persentase DP minimum di credit_settings.
+   */
+  dp_amount: number | null;
   created_at: string;
   updated_at: string;
 }

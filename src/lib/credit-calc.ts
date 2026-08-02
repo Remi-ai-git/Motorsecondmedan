@@ -138,17 +138,31 @@ export interface MotorCreditSummary {
 
 /**
  * Ringkasan kredit singkat untuk kartu katalog ("DP mulai Rp X" / "Cicilan
- * mulai Rp Y/bulan"). DP minimal = DP tunai terkecil yang perlu dibayar
- * pembeli agar memenuhi min_dp_percent, setelah subsidi/surcharge dp_discount
- * motor (diatur admin). Cicilan mulai = angsuran terendah di antara semua
- * tenor pada DP minimal tsb — biasanya tenor terpanjang.
+ * mulai Rp Y/bulan").
  *
- * Mengembalikan null kalau harga motor belum ada atau tarif sedang tidak
- * berlaku (effective_until sudah lewat), supaya tidak menampilkan angka yang
- * salah/kedaluwarsa ke pembeli.
+ * DP input yang diproses kalkulator:
+ *  - Kalau admin sudah isi kolom DP manual (motor.dp_amount) di halaman
+ *    admin, nilai itu yang dipakai sebagai input ke kalkulator (simulateCredit).
+ *  - Kalau belum diisi (null), fallback ke taksiran otomatis: DP tunai
+ *    terkecil yang perlu dibayar pembeli agar memenuhi min_dp_percent,
+ *    setelah subsidi/surcharge dp_discount motor.
+ *
+ * Angka "DP Minimal" yang ditampilkan ke publik adalah dp_effective hasil
+ * kalkulator (DP input + subsidi/surcharge dp_discount) — bukan input mentah
+ * — supaya konsisten dengan yang benar-benar dipakai kalkulator untuk
+ * menghitung angsuran. Kalau DP yang diisi admin ternyata di bawah DP
+ * minimum yang diwajibkan leasing, kalkulator akan menolak (CreditCalcError)
+ * dan fungsi ini mengembalikan null — supaya tidak menampilkan angka yang
+ * melanggar aturan minimum DP ke pembeli.
+ *
+ * Cicilan mulai = angsuran terendah di antara semua tenor pada DP tsb —
+ * biasanya tenor terpanjang.
+ *
+ * Mengembalikan null juga kalau harga motor belum ada atau tarif sedang
+ * tidak berlaku (effective_until sudah lewat).
  */
 export function computeMotorCreditSummary(
-  motor: Pick<Motor, "model" | "variant" | "price" | "dp_discount">,
+  motor: Pick<Motor, "model" | "variant" | "price" | "dp_discount" | "dp_amount">,
   settings: CreditSettings
 ): MotorCreditSummary | null {
   if (!motor.price || motor.price <= 0) return null;
@@ -157,16 +171,16 @@ export function computeMotorCreditSummary(
   }
 
   const dpDiscount = motor.dp_discount ?? 0;
-  const dpMinimal = Math.max(
-    0,
-    Math.ceil((motor.price * settings.min_dp_percent - dpDiscount) / 1000) * 1000
-  );
+  const dpInput =
+    motor.dp_amount != null
+      ? motor.dp_amount
+      : Math.max(0, Math.ceil((motor.price * settings.min_dp_percent - dpDiscount) / 1000) * 1000);
 
   try {
-    const result = simulateCredit({ motor, settings, dpInput: dpMinimal });
+    const result = simulateCredit({ motor, settings, dpInput });
     if (result.rows.length === 0) return null;
     const cicilanMulai = Math.min(...result.rows.map((r) => r.monthly_installment));
-    return { dp_minimal: dpMinimal, cicilan_mulai: cicilanMulai };
+    return { dp_minimal: result.dp_effective, cicilan_mulai: cicilanMulai };
   } catch {
     return null;
   }

@@ -32,6 +32,9 @@ export const motorInputSchema = z
   // Subsidi DP dari penjual — bisa positif (menambah DP efektif, angsuran
   // lebih ringan) atau negatif (surcharge, mengurangi DP efektif).
   dp_discount: z.coerce.number().default(0),
+  // DP manual yang diisi admin (rupiah) — dipakai kalkulator untuk
+  // menentukan DP Minimal & Cicilan mulai di katalog. Kosong = otomatis.
+  dp_amount: z.coerce.number().int().min(0).optional().nullable(),
   })
   .refine(
     (data) => {
