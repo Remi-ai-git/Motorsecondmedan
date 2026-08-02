@@ -1,13 +1,17 @@
 import type { CreditSettings, CreditSimulationResult, CreditSimulationRow, Motor } from "@/lib/types";
+import { getMarketPrice } from "@/lib/motor-market-price";
 
 /**
  * Simulasi kredit motor — port dari rumus Excel "Tools UMC SOF SUMUT Area
  * with PGI & Oona Insurance" (sheet Tools + Sheet3).
  *
  * Alur (mengikuti Sheet3 baris 30-39, kolom N-U):
- *  1. DP efektif = DP input pembeli + subsidi/diskon DP yang diatur admin
+ *  1. OTR = Harga Market Price resmi dari tabel leasing (Type + Tahun) — LIHAT
+ *     resolveOtr() di bawah. Kalkulator TIDAK memakai harga cash yang diinput
+ *     di website; itu semata harga jual yang ditampilkan ke pembeli cash.
+ *  1b. DP efektif = DP input pembeli + subsidi/diskon DP yang diatur admin
  *     per motor (motor.dp_discount).
- *  2. Pokok pencairan = OTR (harga motor) - DP efektif.
+ *  2. Pokok pencairan = OTR (Market Price) - DP efektif.
  *  3. Untuk setiap tenor:
  *     - Premi asuransi kendaraan = rate interpolasi(tenor) * OTR
  *     - Premi jiwa = base premium * jumlah tahun tenor (dibulatkan ke atas)
@@ -57,14 +61,26 @@ function isPgiExcluded(motor: Pick<Motor, "model" | "variant">, s: CreditSetting
   return candidates.some((c) => excluded.has(c));
 }
 
+/**
+ * OTR yang dipakai kalkulator kredit — SELALU Harga Market Price resmi dari
+ * tabel leasing (dicocokkan lewat Type + Tahun motor), BUKAN harga cash yang
+ * diinput admin di website. Kalau Type motor tidak dikenal di tabel leasing
+ * (brand "Lainnya", atau Type belum terdaftar) atau tahunnya di luar rentang
+ * yang dicover periode ini, fallback ke harga cash website supaya kalkulator
+ * tetap bisa jalan (lebih baik taksiran daripada gagal total).
+ */
+function resolveOtr(motor: Pick<Motor, "variant" | "year" | "price">): number {
+  return getMarketPrice(motor.variant, motor.year) ?? motor.price;
+}
+
 export interface SimulateCreditInput {
-  motor: Pick<Motor, "model" | "variant" | "price" | "dp_discount">;
+  motor: Pick<Motor, "model" | "variant" | "price" | "dp_discount" | "year">;
   settings: CreditSettings;
   dpInput: number;
 }
 
 export function simulateCredit({ motor, settings, dpInput }: SimulateCreditInput): CreditSimulationResult {
-  const otr = motor.price;
+  const otr = resolveOtr(motor);
   if (!otr || otr <= 0) {
     throw new CreditCalcError("Harga motor belum tersedia.");
   }
@@ -166,17 +182,23 @@ export interface MotorCreditSummary {
  * Cicilan mulai = angsuran terendah di antara semua tenor pada DP tsb —
  * biasanya tenor terpanjang.
  *
- * Mengembalikan null juga kalau harga motor belum ada atau tarif sedang
- * tidak berlaku (effective_until sudah lewat).
+ * OTR yang dipakai untuk taksiran % DP minimum (kalau dp_amount belum diisi
+ * admin) juga Harga Market Price resmi (resolveOtr), bukan harga cash — lihat
+ * komentar di resolveOtr().
+ *
+ * Mengembalikan null juga kalau OTR (Market Price maupun fallback harga cash)
+ * belum ada atau tarif sedang tidak berlaku (effective_until sudah lewat).
  */
 export function computeMotorCreditSummary(
-  motor: Pick<Motor, "model" | "variant" | "price" | "dp_discount" | "dp_amount">,
+  motor: Pick<Motor, "model" | "variant" | "price" | "dp_discount" | "dp_amount" | "year">,
   settings: CreditSettings
 ): MotorCreditSummary | null {
-  if (!motor.price || motor.price <= 0) return null;
   if (settings.effective_until && new Date(settings.effective_until) < new Date()) {
     return null;
   }
+
+  const otr = resolveOtr(motor);
+  if (!otr || otr <= 0) return null;
 
   const dpDiscount = motor.dp_discount ?? 0;
   // dpInput = DP yang tampil ke pembeli (sudah dikurangi subsidi). simulateCredit
@@ -186,7 +208,7 @@ export function computeMotorCreditSummary(
   const dpInput =
     motor.dp_amount != null
       ? Math.max(0, motor.dp_amount - dpDiscount)
-      : Math.max(0, Math.ceil((motor.price * settings.min_dp_percent - dpDiscount) / 1000) * 1000);
+      : Math.max(0, Math.ceil((otr * settings.min_dp_percent - dpDiscount) / 1000) * 1000);
 
   try {
     const result = simulateCredit({ motor, settings, dpInput });
