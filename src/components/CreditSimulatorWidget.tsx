@@ -104,27 +104,6 @@ export default function CreditSimulatorWidget({
               </tbody>
             </table>
           </div>
-
-          <details className="mt-3 text-[9px] text-zinc-500 sm:text-xs">
-            <summary className="cursor-pointer select-none">
-              Rincian komponen biaya (tenor {result.rows[0]?.tenor} bulan)
-            </summary>
-            {result.rows[0] && (
-              <ul className="mt-2 space-y-1">
-                <li>Pokok pencairan: {formatRupiah(result.financed_principal)}</li>
-                <li>Premi asuransi kendaraan: {formatRupiah(result.rows[0].vehicle_insurance)}</li>
-                <li>Premi asuransi jiwa: {formatRupiah(result.rows[0].life_insurance)}</li>
-                <li>Premi PGI: {formatRupiah(result.rows[0].pgi)}</li>
-                <li>Premi Oona: {formatRupiah(result.rows[0].oona)}</li>
-                <li>Biaya admin: {formatRupiah(result.rows[0].admin_fee)}</li>
-              </ul>
-            )}
-          </details>
-
-          <p className="mt-3 text-[9px] text-zinc-400 sm:text-xs">
-            *Taksiran ini belum termasuk biaya notaris/survey yang mungkin
-            berlaku sesuai kebijakan leasing.
-          </p>
         </div>
       )}
     </div>
