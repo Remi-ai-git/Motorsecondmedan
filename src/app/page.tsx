@@ -30,23 +30,49 @@ export default async function Home() {
         <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-4 px-4 sm:gap-8 lg:grid-cols-2">
           <div>
             <h1 className="max-w-2xl text-xl font-bold leading-tight sm:text-4xl">
-              Motor Bekas Berkualitas,{" "}
+              Jual Beli Motor Bekas Berkualitas,{" "}
               <span className="text-rose-500">Surat Lengkap</span>, Harga
               Jujur dan Bergaransi.
             </h1>
             <p className="mt-1 text-sm font-semibold text-rose-400 sm:mt-2 sm:text-base">
               Cash &amp; Kredit
             </p>
-            <p className="mt-2 max-w-xl text-xs text-zinc-300 sm:mt-3 sm:text-base">
-              Arta Motor Medan —{" "}
+            <p className="mt-2 flex max-w-xl items-start gap-1.5 text-xs text-zinc-300 sm:mt-3 sm:text-base">
+              <span>Arta Motor Medan —</span>
               <a
                 href="https://maps.app.goo.gl/GVAX4Cp4jdmzZPq8A?g_st=aw"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="underline hover:text-white"
+                className="inline-flex items-start gap-1 underline hover:text-white"
               >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="mt-0.5 h-4 w-4 flex-shrink-0 text-rose-500"
+                  aria-hidden="true"
+                >
+                  <path d="M12 2C7.58 2 4 5.58 4 10c0 5.25 6.19 11.19 7.14 12.07a1.2 1.2 0 0 0 1.72 0C13.81 21.19 20 15.25 20 10c0-4.42-3.58-8-8-8zm0 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6z" />
+                </svg>
                 Jl. Brig Jend. Zein Hamid No.1, Titi Kuning, Medan Johor,
                 Medan City, North Sumatra 20147
+              </a>
+            </p>
+            <p className="mt-1.5 text-xs text-zinc-300 sm:text-base">
+              <a
+                href="https://www.tiktok.com/@artamotor55"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 underline hover:text-white"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="h-4 w-4 flex-shrink-0"
+                  aria-hidden="true"
+                >
+                  <path d="M16.6 5.82c-.9-.6-1.53-1.53-1.72-2.61h-3.02v13.44c0 1.34-1.09 2.43-2.43 2.43a2.43 2.43 0 0 1-2.43-2.43 2.43 2.43 0 0 1 2.43-2.43c.24 0 .48.04.7.1v-3.06a5.5 5.5 0 0 0-.7-.05A5.5 5.5 0 0 0 4 16.65 5.5 5.5 0 0 0 9.43 22.1a5.5 5.5 0 0 0 5.43-5.45V9.4a7.6 7.6 0 0 0 4.14 1.22V7.6c-.87 0-1.72-.28-2.4-.75-.01 0 0 0 0 0Z" />
+                </svg>
+                @artamotor55
               </a>
             </p>
             <div className="mt-3 flex gap-2 sm:mt-6 sm:gap-3">
