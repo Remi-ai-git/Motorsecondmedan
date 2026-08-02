@@ -480,12 +480,15 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
             placeholder="Kosongkan untuk hitung otomatis dari % DP minimum"
           />
           <p className="mt-1 text-xs text-zinc-400">
-            Diproses lewat kalkulator kredit yang sama — hasilnya (DP efektif +
-            cicilan termurah) itulah yang tampil sebagai &quot;DP Minimal&quot; &amp;
-            &quot;Cicilan mulai&quot; di katalog. Kalau diisi di bawah DP minimum yang
-            diwajibkan (lihat halaman Settings kredit), kotak DP di katalog tidak
-            akan tampil. Kosongkan untuk pakai taksiran otomatis dari persentase DP
-            minimum.
+            Ini DP PENUH yang dipakai kalkulator untuk menghitung cicilan.
+            Kalau ada subsidi/potongan DP di bawah, DP yang TAMPIL di katalog
+            otomatis dikurangi subsidi (lebih menarik buat pembeli), tapi
+            cicilan tetap dihitung dari DP penuh di kolom ini — contoh: DP di
+            sini isi 5jt, subsidi 1jt → katalog tampilkan DP 4jt, tapi cicilan
+            dihitung seolah DP 5jt. Kalau diisi di bawah DP minimum yang
+            diwajibkan (lihat halaman Settings kredit), kotak DP di katalog
+            tidak akan tampil. Kosongkan untuk pakai taksiran otomatis dari
+            persentase DP minimum.
           </p>
         </div>
         <div>
@@ -498,11 +501,12 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
             placeholder="0"
           />
           <p className="mt-1 text-xs text-zinc-400">
-            Ditambahkan ke DP (baik DP katalog di atas maupun DP yang diinput
-            pembeli sendiri) sebelum dihitung di simulasi kredit. Isi positif
-            untuk subsidi (contoh: DP 5jt + subsidi 2jt → dihitung seolah DP
-            7jt, angsuran lebih ringan). Isi negatif untuk surcharge (mengurangi
-            DP efektif, angsuran lebih berat).
+            Dikurangkan dari DP di atas (atau dari taksiran DP minimum kalau DP
+            katalog dikosongkan) untuk dapat DP yang TAMPIL ke pembeli — tapi
+            cicilan tetap dihitung dari DP penuh (subsidi ditambahkan balik di
+            sisi kalkulator). Isi positif untuk subsidi (DP tampil lebih
+            kecil, angsuran tidak berubah). Isi negatif untuk surcharge (DP
+            tampil lebih besar dari DP penuh — jarang dipakai).
           </p>
         </div>
         <div>

@@ -140,19 +140,27 @@ export interface MotorCreditSummary {
  * Ringkasan kredit singkat untuk kartu katalog ("DP mulai Rp X" / "Cicilan
  * mulai Rp Y/bulan").
  *
- * DP input yang diproses kalkulator:
- *  - Kalau admin sudah isi kolom DP manual (motor.dp_amount) di halaman
- *    admin, nilai itu yang dipakai sebagai input ke kalkulator (simulateCredit).
- *  - Kalau belum diisi (null), fallback ke taksiran otomatis: DP tunai
- *    terkecil yang perlu dibayar pembeli agar memenuhi min_dp_percent,
- *    setelah subsidi/surcharge dp_discount motor.
+ * Contoh cara kerja subsidi (dicek ulang terhadap kalkulator Excel):
+ *   Admin isi "DP untuk katalog" = Rp 5.000.000, subsidi (dp_discount) =
+ *   Rp 1.000.000.
+ *   -> DP yang TAMPIL di katalog = 5.000.000 - 1.000.000 = Rp 4.000.000
+ *      (angka yang perlu dibawa pembeli, sudah dikurangi subsidi dealer).
+ *   -> Cicilan tetap dihitung dari DP PENUH Rp 5.000.000 (subsidi dealer
+ *      menambah balik di sisi kalkulator, jadi pokok yang diangsur berkurang
+ *      seolah pembeli bayar DP 5jt penuh — bukan cuma 4jt).
  *
- * Angka "DP Minimal" yang ditampilkan ke publik adalah dp_effective hasil
- * kalkulator (DP input + subsidi/surcharge dp_discount) — bukan input mentah
- * — supaya konsisten dengan yang benar-benar dipakai kalkulator untuk
- * menghitung angsuran. Kalau DP yang diisi admin ternyata di bawah DP
- * minimum yang diwajibkan leasing, kalkulator akan menolak (CreditCalcError)
- * dan fungsi ini mengembalikan null — supaya tidak menampilkan angka yang
+ * Mekanismenya: dpInput yang dikirim ke simulateCredit = dp_amount -
+ * dp_discount (=DP yang tampil ke pembeli). Di dalam simulateCredit,
+ * dp_effective = dpInput + dp_discount = dp_amount lagi (DP penuh) — itu yang
+ * dipakai mengurangi pokok pencairan untuk hitung angsuran. Pola yang sama
+ * dipakai untuk kasus otomatis (dp_amount belum diisi admin): dpInput =
+ * taksiran DP minimum (dari % settings) dikurangi subsidi, supaya angka yang
+ * tampil ke pembeli juga sudah bersih dari subsidi, sementara cicilan tetap
+ * dihitung dari DP penuh sesuai % minimum.
+ *
+ * Kalau DP (penuh, setelah subsidi ditambahkan balik) ternyata di bawah DP
+ * minimum yang diwajibkan leasing, kalkulator menolak (CreditCalcError) dan
+ * fungsi ini mengembalikan null — supaya tidak menampilkan angka yang
  * melanggar aturan minimum DP ke pembeli.
  *
  * Cicilan mulai = angsuran terendah di antara semua tenor pada DP tsb —
@@ -171,16 +179,20 @@ export function computeMotorCreditSummary(
   }
 
   const dpDiscount = motor.dp_discount ?? 0;
+  // dpInput = DP yang tampil ke pembeli (sudah dikurangi subsidi). simulateCredit
+  // menambahkan lagi dpDiscount di dalam (dp_effective = dpInput + dpDiscount),
+  // jadi cicilan tetap dihitung dari DP penuh (dp_amount, atau taksiran % kalau
+  // dp_amount belum diisi) — lihat contoh di komentar atas fungsi ini.
   const dpInput =
     motor.dp_amount != null
-      ? motor.dp_amount
+      ? Math.max(0, motor.dp_amount - dpDiscount)
       : Math.max(0, Math.ceil((motor.price * settings.min_dp_percent - dpDiscount) / 1000) * 1000);
 
   try {
     const result = simulateCredit({ motor, settings, dpInput });
     if (result.rows.length === 0) return null;
     const cicilanMulai = Math.min(...result.rows.map((r) => r.monthly_installment));
-    return { dp_minimal: result.dp_effective, cicilan_mulai: cicilanMulai };
+    return { dp_minimal: dpInput, cicilan_mulai: cicilanMulai };
   } catch {
     return null;
   }
