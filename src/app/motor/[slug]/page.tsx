@@ -1,7 +1,12 @@
 import { notFound } from "next/navigation";
 import { getSupabase } from "@/lib/supabase";
 import { formatRupiah, type CreditSettings, type Motor } from "@/lib/types";
-import { computeMotorCreditSummary, isCashOnlyByAge, CASH_ONLY_MAX_YEAR } from "@/lib/credit-calc";
+import {
+  computeMotorCreditSummary,
+  isCashOnlyByAge,
+  isDpOnlyByAge,
+  CASH_ONLY_MAX_YEAR,
+} from "@/lib/credit-calc";
 import MotorGallery from "@/components/MotorGallery";
 import CreditSimulatorWidget from "@/components/CreditSimulatorWidget";
 
@@ -24,6 +29,7 @@ export default async function MotorDetailPage({
   const settings = settingsData as CreditSettings | null;
   const creditSummary = settings ? computeMotorCreditSummary(motor, settings) : null;
   const cashOnly = isCashOnlyByAge(motor.year);
+  const dpOnly = isDpOnlyByAge(motor.year);
   const wa = process.env.NEXT_PUBLIC_WA_NUMBER;
   const waText = encodeURIComponent(
     `Halo Arta Motor, saya tertarik dengan ${motor.brand} ${motor.model} ${motor.year} (${formatRupiah(motor.price)}). Apakah masih tersedia?`
@@ -75,7 +81,9 @@ export default async function MotorDetailPage({
         {creditSummary ? (
           <div className="mt-2 text-xs font-semibold text-rose-600 sm:text-base">
             <p>DP mulai {formatRupiah(creditSummary.dp_minimal)}</p>
-            <p>Cicilan mulai {formatRupiah(creditSummary.cicilan_mulai)}/bulan</p>
+            {!dpOnly && (
+              <p>Cicilan mulai {formatRupiah(creditSummary.cicilan_mulai)}/bulan</p>
+            )}
           </div>
         ) : (
           cashOnly && (

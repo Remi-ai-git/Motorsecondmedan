@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { formatRupiah, type Motor } from "@/lib/types";
-import { isCashOnlyByAge } from "@/lib/credit-calc";
+import { isCashOnlyByAge, isDpOnlyByAge } from "@/lib/credit-calc";
 
 const categoryColors: Record<string, string> = {
   matic: "bg-sky-100 text-sky-700",
@@ -20,6 +20,7 @@ export default function MotorCard({
   cicilanMulai?: number | null;
 }) {
   const cashOnly = isCashOnlyByAge(motor.year);
+  const dpOnly = isDpOnlyByAge(motor.year);
   return (
     <div className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white transition hover:shadow-lg">
       <Link href={`/motor/${motor.slug}`} className="block">
@@ -59,7 +60,7 @@ export default function MotorCard({
           {dpMinimal != null && cicilanMulai != null ? (
             <div className="text-base font-semibold text-rose-600">
               <p>DP mulai {formatRupiah(dpMinimal)}</p>
-              <p>Cicilan mulai {formatRupiah(cicilanMulai)}/bulan</p>
+              {!dpOnly && <p>Cicilan mulai {formatRupiah(cicilanMulai)}/bulan</p>}
             </div>
           ) : (
             cashOnly && (

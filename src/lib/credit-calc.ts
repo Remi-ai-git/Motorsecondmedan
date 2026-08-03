@@ -28,13 +28,25 @@ export class CreditCalcError extends Error {}
 
 /**
  * Batas usia motor untuk bisa diajukan kredit — leasing tidak menerima
- * pengajuan kredit untuk motor tahun 2019 ke bawah (kebijakan usia maksimal
+ * pengajuan kredit untuk motor tahun 2018 ke bawah (kebijakan usia maksimal
  * kendaraan). Motor seumur itu hanya bisa dibeli cash.
  */
-export const CASH_ONLY_MAX_YEAR = 2019;
+export const CASH_ONLY_MAX_YEAR = 2018;
+
+/**
+ * Motor tahun 2019-2022 masih bisa kredit (kalkulator tetap jalan penuh),
+ * tapi sengaja tidak dipromosikan dengan angka "Cicilan mulai" di katalog —
+ * cukup tampilkan DP saja. Cicilan tetap bisa dilihat kalau pembeli sendiri
+ * yang menghitung lewat kalkulator di halaman detail.
+ */
+export const DP_ONLY_MAX_YEAR = 2022;
 
 export function isCashOnlyByAge(year: number): boolean {
   return year <= CASH_ONLY_MAX_YEAR;
+}
+
+export function isDpOnlyByAge(year: number): boolean {
+  return year > CASH_ONLY_MAX_YEAR && year <= DP_ONLY_MAX_YEAR;
 }
 
 /** Replikasi fungsi PMT Excel (annuity-due jika type=1, default type=0). */
