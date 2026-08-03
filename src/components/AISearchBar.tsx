@@ -10,11 +10,11 @@ type MotorResult = Motor & {
 };
 
 export default function AISearchBar({
-  typeOptions = [],
+  modelOptions = [],
 }: {
-  /** Shortcut pencarian — daftar Type produk yang benar-benar ada di katalog
+  /** Shortcut pencarian — daftar Model produk yang benar-benar ada di katalog
    * (bukan contoh generik), dikirim dari halaman server (homepage/katalog). */
-  typeOptions?: string[];
+  modelOptions?: string[];
 }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<MotorResult[] | null>(null);
@@ -69,18 +69,18 @@ export default function AISearchBar({
         </button>
       </form>
 
-      {typeOptions.length > 0 && (
+      {modelOptions.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {typeOptions.map((t) => (
+          {modelOptions.map((m) => (
             <button
-              key={t}
+              key={m}
               onClick={() => {
-                setQuery(t);
-                search(t);
+                setQuery(m);
+                search(m);
               }}
               className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs text-zinc-600 hover:border-rose-300 hover:text-rose-600"
             >
-              {t}
+              {m}
             </button>
           ))}
         </div>
