@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const { query } = (await req.json()) as { query: string };
+  const { query, mode } = (await req.json()) as { query: string; mode?: string };
   if (!query?.trim()) {
     return Response.json({ error: "Query kosong" }, { status: 400 });
   }
@@ -55,41 +55,62 @@ export async function POST(req: Request) {
     return Response.json({ error: "Query terlalu panjang" }, { status: 400 });
   }
 
-  const { object: f } = await generateObject({
-    // Model ringan & murah (Flash-Lite) — cukup untuk ekstraksi filter
-    // pencarian sederhana, biaya jauh lebih rendah daripada Flash/Pro biasa.
-    model: google("gemini-3.1-flash-lite"),
-    schema: filterSchema,
-    prompt: `Terjemahkan pencarian motor bekas berikut menjadi filter database. Harga dalam rupiah ("18 juta" = 18000000). Set null jika tidak disebut/tersirat.\n\nPencarian: "${query}"`,
-  });
-
   const supabase = getSupabase();
-  let q = supabase.from("motors").select("*").eq("status", "tersedia");
+  let data: Motor[] | null = null;
+  let filters: unknown = null;
 
-  if (f.budget_max) q = q.lte("price", f.budget_max);
-  if (f.budget_min) q = q.gte("price", f.budget_min);
-  if (f.brand) q = q.ilike("brand", `%${f.brand}%`);
-  if (f.model) q = q.ilike("model", `%${f.model}%`);
-  if (f.category) q = q.eq("category", f.category);
-  if (f.year_min) q = q.gte("year", f.year_min);
-  if (f.year_max) q = q.lte("year", f.year_max);
-  if (f.km_max) q = q.lte("km", f.km_max);
-  if (f.color) q = q.ilike("color", `%${f.color}%`);
-  if (f.tax_status) q = q.eq("tax_status", f.tax_status);
-
-  let { data, error } = await q.order("price").limit(12);
-  if (error) return Response.json({ error: error.message }, { status: 500 });
-
-  // Fallback: jika filter ketat tidak menemukan apa pun, coba cocokkan lewat tags
-  if ((!data || data.length === 0) && f.tags.length > 0) {
+  if (mode === "shortcut") {
+    // Shortcut Model/Brand di widget AI Search — pencocokan deterministik
+    // (bukan lewat AI), supaya SEMUA produk yang model/type/brand-nya
+    // mengandung kata kunci ini pasti muncul, tanpa tergantung interpretasi AI.
+    const kw = query.trim().replace(/[%,]/g, "");
     const res = await supabase
       .from("motors")
       .select("*")
       .eq("status", "tersedia")
-      .overlaps("tags", f.tags)
+      .or(`model.ilike.%${kw}%,variant.ilike.%${kw}%,brand.ilike.%${kw}%`)
       .order("price")
-      .limit(12);
-    data = res.data;
+      .limit(48);
+    if (res.error) return Response.json({ error: res.error.message }, { status: 500 });
+    data = res.data as Motor[];
+  } else {
+    const { object: f } = await generateObject({
+      // Model ringan & murah (Flash-Lite) — cukup untuk ekstraksi filter
+      // pencarian sederhana, biaya jauh lebih rendah daripada Flash/Pro biasa.
+      model: google("gemini-3.1-flash-lite"),
+      schema: filterSchema,
+      prompt: `Terjemahkan pencarian motor bekas berikut menjadi filter database. Harga dalam rupiah ("18 juta" = 18000000). Set null jika tidak disebut/tersirat.\n\nPencarian: "${query}"`,
+    });
+    filters = f;
+
+    let q = supabase.from("motors").select("*").eq("status", "tersedia");
+
+    if (f.budget_max) q = q.lte("price", f.budget_max);
+    if (f.budget_min) q = q.gte("price", f.budget_min);
+    if (f.brand) q = q.ilike("brand", `%${f.brand}%`);
+    if (f.model) q = q.ilike("model", `%${f.model}%`);
+    if (f.category) q = q.eq("category", f.category);
+    if (f.year_min) q = q.gte("year", f.year_min);
+    if (f.year_max) q = q.lte("year", f.year_max);
+    if (f.km_max) q = q.lte("km", f.km_max);
+    if (f.color) q = q.ilike("color", `%${f.color}%`);
+    if (f.tax_status) q = q.eq("tax_status", f.tax_status);
+
+    const res = await q.order("price").limit(12);
+    if (res.error) return Response.json({ error: res.error.message }, { status: 500 });
+    data = res.data as Motor[];
+
+    // Fallback: jika filter ketat tidak menemukan apa pun, coba cocokkan lewat tags
+    if ((!data || data.length === 0) && f.tags.length > 0) {
+      const res2 = await supabase
+        .from("motors")
+        .select("*")
+        .eq("status", "tersedia")
+        .overlaps("tags", f.tags)
+        .order("price")
+        .limit(12);
+      data = res2.data as Motor[];
+    }
   }
 
   // Tempel ringkasan "DP mulai" / "Cicilan mulai" per motor, sama seperti di
@@ -101,7 +122,7 @@ export async function POST(req: Request) {
     .single();
   const settings = settingsData as CreditSettings | null;
 
-  const results = ((data as Motor[]) ?? []).map((m) => {
+  const results = (data ?? []).map((m) => {
     const summary = settings ? computeMotorCreditSummary(m, settings) : null;
     return {
       ...m,
@@ -110,5 +131,5 @@ export async function POST(req: Request) {
     };
   });
 
-  return Response.json({ filters: f, results });
+  return Response.json({ filters, results });
 }

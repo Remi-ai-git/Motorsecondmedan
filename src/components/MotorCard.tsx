@@ -71,7 +71,7 @@ export default function MotorCard({
           )}
         </div>
       </Link>
-      {!cashOnly && (
+      {!cashOnly && !dpOnly && (
         <div className="px-4 pt-2">
           <Link
             href={`/motor/${motor.slug}#kredit`}

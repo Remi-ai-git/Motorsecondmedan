@@ -9,19 +9,29 @@ type MotorResult = Motor & {
   cicilan_mulai?: number | null;
 };
 
-export default function AISearchBar({
-  modelOptions = [],
-}: {
-  /** Shortcut pencarian — daftar Model produk yang benar-benar ada di katalog
-   * (bukan contoh generik), dikirim dari halaman server (homepage/katalog). */
-  modelOptions?: string[];
-}) {
+// Shortcut tetap (Model & Brand) — klik shortcut memunculkan SEMUA produk yang
+// model/type/brand-nya mengandung kata ini (pencocokan substring, deterministik,
+// tidak lewat AI), lihat mode "shortcut" di /api/search.
+const SHORTCUTS = [
+  "VARIO",
+  "BEAT",
+  "PCX",
+  "GENIO",
+  "ADV",
+  "SPORT",
+  "YAMAHA",
+  "SUZUKI",
+  "KAWASAKI",
+  "PIAGGIO",
+];
+
+export default function AISearchBar() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<MotorResult[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function search(q: string) {
+  async function search(q: string, mode?: "shortcut") {
     if (!q.trim()) return;
     setLoading(true);
     setError("");
@@ -29,7 +39,7 @@ export default function AISearchBar({
       const res = await fetch("/api/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: q }),
+        body: JSON.stringify({ query: q, mode }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error ?? "Pencarian gagal");
@@ -69,22 +79,20 @@ export default function AISearchBar({
         </button>
       </form>
 
-      {modelOptions.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {modelOptions.map((m) => (
-            <button
-              key={m}
-              onClick={() => {
-                setQuery(m);
-                search(m);
-              }}
-              className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs text-zinc-600 hover:border-rose-300 hover:text-rose-600"
-            >
-              {m}
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="flex flex-wrap gap-2">
+        {SHORTCUTS.map((s) => (
+          <button
+            key={s}
+            onClick={() => {
+              setQuery(s);
+              search(s, "shortcut");
+            }}
+            className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs text-zinc-600 hover:border-rose-300 hover:text-rose-600"
+          >
+            {s}
+          </button>
+        ))}
+      </div>
 
       {error && <p className="text-sm text-rose-600">{error}</p>}
 
