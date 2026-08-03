@@ -34,12 +34,12 @@ export class CreditCalcError extends Error {}
 export const CASH_ONLY_MAX_YEAR = 2018;
 
 /**
- * Motor tahun 2019-2022 masih bisa kredit (kalkulator tetap jalan penuh),
+ * Motor tahun 2019-2021 masih bisa kredit (kalkulator tetap jalan penuh),
  * tapi sengaja tidak dipromosikan dengan angka "Cicilan mulai" di katalog —
  * cukup tampilkan DP saja. Cicilan tetap bisa dilihat kalau pembeli sendiri
  * yang menghitung lewat kalkulator di halaman detail.
  */
-export const DP_ONLY_MAX_YEAR = 2022;
+export const DP_ONLY_MAX_YEAR = 2021;
 
 export function isCashOnlyByAge(year: number): boolean {
   return year <= CASH_ONLY_MAX_YEAR;
