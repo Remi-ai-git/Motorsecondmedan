@@ -26,6 +26,17 @@ import { getMarketPrice } from "@/lib/motor-market-price";
 
 export class CreditCalcError extends Error {}
 
+/**
+ * Batas usia motor untuk bisa diajukan kredit — leasing tidak menerima
+ * pengajuan kredit untuk motor tahun 2019 ke bawah (kebijakan usia maksimal
+ * kendaraan). Motor seumur itu hanya bisa dibeli cash.
+ */
+export const CASH_ONLY_MAX_YEAR = 2019;
+
+export function isCashOnlyByAge(year: number): boolean {
+  return year <= CASH_ONLY_MAX_YEAR;
+}
+
 /** Replikasi fungsi PMT Excel (annuity-due jika type=1, default type=0). */
 function pmt(rate: number, nper: number, pv: number, fv = 0, type: 0 | 1 = 0): number {
   if (rate === 0) return -(pv + fv) / nper;
@@ -80,6 +91,12 @@ export interface SimulateCreditInput {
 }
 
 export function simulateCredit({ motor, settings, dpInput }: SimulateCreditInput): CreditSimulationResult {
+  if (isCashOnlyByAge(motor.year)) {
+    throw new CreditCalcError(
+      `Motor tahun ${motor.year} (tahun ${CASH_ONLY_MAX_YEAR} ke bawah) tidak bisa kredit — Cash Only.`
+    );
+  }
+
   const otr = resolveOtr(motor);
   if (!otr || otr <= 0) {
     throw new CreditCalcError("Harga motor belum tersedia.");
@@ -192,6 +209,7 @@ export function computeMotorCreditSummary(
   motor: Pick<Motor, "model" | "variant" | "price" | "dp_discount" | "dp_amount" | "year">,
   settings: CreditSettings
 ): MotorCreditSummary | null {
+  if (isCashOnlyByAge(motor.year)) return null;
   if (settings.effective_until && new Date(settings.effective_until) < new Date()) {
     return null;
   }

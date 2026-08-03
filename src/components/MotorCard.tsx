@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatRupiah, type Motor } from "@/lib/types";
+import { isCashOnlyByAge } from "@/lib/credit-calc";
 
 const categoryColors: Record<string, string> = {
   matic: "bg-sky-100 text-sky-700",
@@ -18,6 +19,7 @@ export default function MotorCard({
   dpMinimal?: number | null;
   cicilanMulai?: number | null;
 }) {
+  const cashOnly = isCashOnlyByAge(motor.year);
   return (
     <div className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white transition hover:shadow-lg">
       <Link href={`/motor/${motor.slug}`} className="block">
@@ -54,22 +56,30 @@ export default function MotorCard({
           <p className="text-lg font-bold text-rose-600">
             {formatRupiah(motor.price)}
           </p>
-          {dpMinimal != null && cicilanMulai != null && (
+          {dpMinimal != null && cicilanMulai != null ? (
             <div className="text-base font-semibold text-rose-600">
               <p>DP mulai {formatRupiah(dpMinimal)}</p>
               <p>Cicilan mulai {formatRupiah(cicilanMulai)}/bulan</p>
             </div>
+          ) : (
+            cashOnly && (
+              <p className="text-sm font-semibold text-zinc-500">
+                💵 Cash Only — tidak bisa kredit
+              </p>
+            )
           )}
         </div>
       </Link>
-      <div className="px-4 pt-2">
-        <Link
-          href={`/motor/${motor.slug}#kredit`}
-          className="block w-full rounded-full border border-rose-600 px-4 py-2 text-center text-sm font-medium text-rose-600 transition hover:bg-rose-600 hover:text-white"
-        >
-          Hitung Kredit
-        </Link>
-      </div>
+      {!cashOnly && (
+        <div className="px-4 pt-2">
+          <Link
+            href={`/motor/${motor.slug}#kredit`}
+            className="block w-full rounded-full border border-rose-600 px-4 py-2 text-center text-sm font-medium text-rose-600 transition hover:bg-rose-600 hover:text-white"
+          >
+            Hitung Kredit
+          </Link>
+        </div>
+      )}
       <Link href={`/motor/${motor.slug}`} className="block">
         <div className="space-y-2 p-4 pt-3">
           <p className="text-xs text-zinc-500">

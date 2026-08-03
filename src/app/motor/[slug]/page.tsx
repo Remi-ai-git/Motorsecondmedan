@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getSupabase } from "@/lib/supabase";
 import { formatRupiah, type CreditSettings, type Motor } from "@/lib/types";
-import { computeMotorCreditSummary } from "@/lib/credit-calc";
+import { computeMotorCreditSummary, isCashOnlyByAge, CASH_ONLY_MAX_YEAR } from "@/lib/credit-calc";
 import MotorGallery from "@/components/MotorGallery";
 import CreditSimulatorWidget from "@/components/CreditSimulatorWidget";
 
@@ -23,6 +23,7 @@ export default async function MotorDetailPage({
   const motor = data as Motor;
   const settings = settingsData as CreditSettings | null;
   const creditSummary = settings ? computeMotorCreditSummary(motor, settings) : null;
+  const cashOnly = isCashOnlyByAge(motor.year);
   const wa = process.env.NEXT_PUBLIC_WA_NUMBER;
   const waText = encodeURIComponent(
     `Halo Arta Motor, saya tertarik dengan ${motor.brand} ${motor.model} ${motor.year} (${formatRupiah(motor.price)}). Apakah masih tersedia?`
@@ -71,18 +72,31 @@ export default async function MotorDetailPage({
         <p className="mt-1 text-[22.5px] font-bold text-rose-600 sm:text-3xl">
           {formatRupiah(motor.price)}
         </p>
-        {creditSummary && (
+        {creditSummary ? (
           <div className="mt-2 text-xs font-semibold text-rose-600 sm:text-base">
             <p>DP mulai {formatRupiah(creditSummary.dp_minimal)}</p>
             <p>Cicilan mulai {formatRupiah(creditSummary.cicilan_mulai)}/bulan</p>
           </div>
+        ) : (
+          cashOnly && (
+            <p className="mt-2 text-xs font-semibold text-zinc-500 sm:text-base">
+              💵 Cash Only — tidak bisa kredit
+            </p>
+          )
         )}
 
-        <CreditSimulatorWidget
-          motorId={motor.id}
-          price={motor.price}
-          defaultDp={creditSummary?.dp_minimal}
-        />
+        {cashOnly ? (
+          <p className="mt-4 rounded-xl bg-zinc-50 p-4 text-[10.5px] text-zinc-600 sm:text-sm">
+            Motor tahun {motor.year} (tahun {CASH_ONLY_MAX_YEAR} ke bawah)
+            tidak bisa diajukan kredit/cicilan — hanya tersedia pembelian cash.
+          </p>
+        ) : (
+          <CreditSimulatorWidget
+            motorId={motor.id}
+            price={motor.price}
+            defaultDp={creditSummary?.dp_minimal}
+          />
+        )}
 
         {motor.promo && (
           <p className="mt-4 inline-block rounded bg-amber-50 px-3 py-1 text-[10.5px] font-medium text-amber-700 sm:text-sm">
