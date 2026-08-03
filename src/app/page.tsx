@@ -10,7 +10,7 @@ export const revalidate = 60;
 
 export default async function Home() {
   const supabase = getSupabase();
-  const [{ data }, { data: settingsData }] = await Promise.all([
+  const [{ data }, { data: settingsData }, { data: typeRows }] = await Promise.all([
     supabase
       .from("motors")
       .select("*")
@@ -18,10 +18,20 @@ export default async function Home() {
       .order("created_at", { ascending: false })
       .limit(9),
     supabase.from("credit_settings").select("*").eq("id", true).single(),
+    supabase.from("motors").select("variant").eq("status", "tersedia"),
   ]);
 
   const motors = (data as Motor[]) ?? [];
   const settings = settingsData as CreditSettings | null;
+  // Shortcut pencarian AI = Type produk yang benar-benar ada di stok saat ini
+  // (bukan contoh generik) — supaya tidak menyarankan model yang tidak dijual.
+  const typeOptions = Array.from(
+    new Set(
+      (typeRows ?? [])
+        .map((r) => r.variant)
+        .filter((v): v is string => !!v && v.trim() !== "")
+    )
+  ).slice(0, 8);
 
   return (
     <div>
@@ -148,7 +158,7 @@ export default async function Home() {
         <p className="mb-4 text-sm text-zinc-500">
           Ketik kebutuhan Anda dengan bahasa sehari-hari.
         </p>
-        <AISearchBar />
+        <AISearchBar typeOptions={typeOptions} />
       </section>
 
       {/* Didukung Oleh (partner leasing) */}

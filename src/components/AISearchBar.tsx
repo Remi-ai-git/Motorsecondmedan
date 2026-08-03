@@ -9,14 +9,13 @@ type MotorResult = Motor & {
   cicilan_mulai?: number | null;
 };
 
-const EXAMPLES = [
-  "Motor Beat di bawah 18 juta",
-  "NMAX tahun 2023",
-  "Motor untuk ojol",
-  "Matic irit km rendah",
-];
-
-export default function AISearchBar() {
+export default function AISearchBar({
+  typeOptions = [],
+}: {
+  /** Shortcut pencarian — daftar Type produk yang benar-benar ada di katalog
+   * (bukan contoh generik), dikirim dari halaman server (homepage/katalog). */
+  typeOptions?: string[];
+}) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<MotorResult[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -70,20 +69,22 @@ export default function AISearchBar() {
         </button>
       </form>
 
-      <div className="flex flex-wrap gap-2">
-        {EXAMPLES.map((ex) => (
-          <button
-            key={ex}
-            onClick={() => {
-              setQuery(ex);
-              search(ex);
-            }}
-            className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs text-zinc-600 hover:border-rose-300 hover:text-rose-600"
-          >
-            {ex}
-          </button>
-        ))}
-      </div>
+      {typeOptions.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {typeOptions.map((t) => (
+            <button
+              key={t}
+              onClick={() => {
+                setQuery(t);
+                search(t);
+              }}
+              className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs text-zinc-600 hover:border-rose-300 hover:text-rose-600"
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      )}
 
       {error && <p className="text-sm text-rose-600">{error}</p>}
 

@@ -30,6 +30,11 @@ export default async function KatalogPage({
   ]);
   const motors = (data as Motor[]) ?? [];
   const settings = settingsData as CreditSettings | null;
+  // Shortcut pencarian AI = Type produk yang benar-benar ada di katalog ini
+  // (bukan contoh generik) — supaya tidak menyarankan model yang tidak dijual.
+  const typeOptions = Array.from(
+    new Set(motors.map((m) => m.variant).filter((v): v is string => !!v && v.trim() !== ""))
+  ).slice(0, 8);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
@@ -39,7 +44,7 @@ export default async function KatalogPage({
       </p>
 
       <div className="mb-8">
-        <AISearchBar />
+        <AISearchBar typeOptions={typeOptions} />
       </div>
 
       <div className="mb-6 flex flex-wrap gap-2">
