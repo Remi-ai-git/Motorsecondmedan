@@ -1,0 +1,173 @@
+// =========================================================================
+// Prisma Schema — Aplikasi Laporan Keuangan Penjualan Sepeda Motor Bekas
+// =========================================================================
+// Database : PostgreSQL
+// ORM      : Prisma
+//
+// Catatan desain:
+// - Setiap tabel punya `id` (UUID) sebagai primary key teknis, terpisah dari
+//   `kodeMotor` yang merupakan business key yang boleh dilihat/dipakai user
+//   (mis. "MTR-2026-0001"). Ini best practice: PK internal tidak pernah
+//   berubah meski kode bisnis di-generate ulang.
+// - Semua nilai uang pakai Decimal(15,2), BUKAN Float, supaya tidak ada
+//   error pembulatan floating point pada perhitungan akuntansi.
+// - `BiayaPerbaikan` dipisah jadi tabel sendiri (one-to-many ke Motor),
+//   bukan satu kolom angka di tabel motors. Ini memberi jejak audit
+//   (kapan, apa, berapa) untuk setiap biaya perbaikan — penting untuk
+//   laporan laba/rugi per unit yang akurat dan bisa diperiksa.
+// - `Penjualan` adalah one-to-one dengan `Motor` (satu motor hanya bisa
+//   terjual satu kali). Status motor di-set TERJUAL saat record Penjualan
+//   dibuat (lihat service layer pada langkah berikutnya).
+// - Database: Supabase project "ArtaMotor". Semua tabel disimpan di
+//   PostgreSQL schema "akunting" (bukan "public"), karena "public" sudah
+//   dipakai project lain (katalog/chatbot) di project Supabase yang sama.
+//   Prisma multiSchema mengurus pemetaan @@schema per model di bawah.
+// =========================================================================
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+  schemas   = ["akunting"]
+}
+
+// -------------------------------------------------------------------------
+// ENUMS
+// -------------------------------------------------------------------------
+
+enum StatusMotor {
+  TERSEDIA
+  TERJUAL
+
+  @@schema("akunting")
+}
+
+enum MetodePembayaran {
+  CASH
+  KREDIT
+
+  @@schema("akunting")
+}
+
+enum KategoriPengeluaran {
+  SEWA_TEMPAT
+  LISTRIK
+  GAJI_PEGAWAI
+  IKLAN
+  PERAWATAN_SHOWROOM
+  LAIN_LAIN
+
+  @@schema("akunting")
+}
+
+enum RolePengguna {
+  ADMIN
+  STAFF
+
+  @@schema("akunting")
+}
+
+// -------------------------------------------------------------------------
+// MODELS
+// -------------------------------------------------------------------------
+
+/// Master data inventaris motor bekas.
+model Motor {
+  id             String      @id @default(uuid())
+  kodeMotor      String      @unique @map("kode_motor")
+  merek          String
+  tipe           String
+  tahunPembuatan Int         @map("tahun_pembuatan")
+  platNomor      String      @unique @map("plat_nomor")
+  noRangka       String?     @unique @map("no_rangka")
+  noMesin        String?     @unique @map("no_mesin")
+  warna          String?
+  hargaBeli      Decimal     @map("harga_beli") @db.Decimal(15, 2)
+  tanggalMasuk   DateTime    @default(now()) @map("tanggal_masuk") @db.Date
+  status         StatusMotor @default(TERSEDIA)
+  keterangan     String?     @db.Text
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+
+  biayaPerbaikan BiayaPerbaikan[]
+  penjualan      Penjualan?
+
+  @@index([status])
+  @@map("motors")
+  @@schema("akunting")
+}
+
+/// Rincian biaya perbaikan per motor (one-to-many). Menjaga jejak audit
+/// untuk setiap pengeluaran perbaikan sebelum motor dijual.
+model BiayaPerbaikan {
+  id          String   @id @default(uuid())
+  motorId     String   @map("motor_id")
+  tanggal     DateTime @db.Date
+  deskripsi   String
+  jumlahBiaya Decimal  @map("jumlah_biaya") @db.Decimal(15, 2)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  motor Motor @relation(fields: [motorId], references: [id], onDelete: Cascade)
+
+  @@index([motorId])
+  @@map("biaya_perbaikan")
+  @@schema("akunting")
+}
+
+/// Transaksi penjualan. Relasi one-to-one ke Motor.
+model Penjualan {
+  id               String           @id @default(uuid())
+  motorId          String           @unique @map("motor_id")
+  tanggalPenjualan DateTime         @map("tanggal_penjualan") @db.Date
+  hargaJual        Decimal          @map("harga_jual") @db.Decimal(15, 2)
+  namaPembeli      String           @map("nama_pembeli")
+  noTeleponPembeli String?          @map("no_telepon_pembeli")
+  metodePembayaran MetodePembayaran @map("metode_pembayaran")
+  namaLeasing      String?          @map("nama_leasing")
+  keterangan       String?          @db.Text
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+
+  motor Motor @relation(fields: [motorId], references: [id], onDelete: Restrict)
+
+  @@index([tanggalPenjualan])
+  @@map("penjualan")
+  @@schema("akunting")
+}
+
+/// Biaya operasional showroom (sewa, listrik, gaji, iklan, dll) — tidak
+/// terkait ke motor tertentu.
+model PengeluaranOperasional {
+  id        String              @id @default(uuid())
+  tanggal   DateTime            @db.Date
+  kategori  KategoriPengeluaran
+  deskripsi String
+  jumlah    Decimal             @db.Decimal(15, 2)
+  createdAt DateTime            @default(now()) @map("created_at")
+  updatedAt DateTime            @updatedAt @map("updated_at")
+
+  @@index([tanggal])
+  @@map("pengeluaran_operasional")
+  @@schema("akunting")
+}
+
+/// Akun pengguna aplikasi (admin/staff showroom) — disiapkan untuk
+/// fitur autentikasi pada tahap berikutnya.
+model User {
+  id           String       @id @default(uuid())
+  nama         String
+  email        String       @unique
+  passwordHash String       @map("password_hash")
+  role         RolePengguna @default(STAFF)
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  @@map("users")
+  @@schema("akunting")
+}

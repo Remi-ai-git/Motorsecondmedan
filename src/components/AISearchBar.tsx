@@ -4,20 +4,34 @@ import { useState } from "react";
 import MotorCard from "@/components/MotorCard";
 import type { Motor } from "@/lib/types";
 
-const EXAMPLES = [
-  "Motor Beat di bawah 18 juta",
-  "NMAX tahun 2023",
-  "Motor untuk ojol",
-  "Matic irit km rendah",
+type MotorResult = Motor & {
+  dp_minimal?: number | null;
+  cicilan_mulai?: number | null;
+};
+
+// Shortcut tetap (Model & Brand) — klik shortcut memunculkan SEMUA produk yang
+// model/type/brand-nya mengandung kata ini (pencocokan substring, deterministik,
+// tidak lewat AI), lihat mode "shortcut" di /api/search.
+const SHORTCUTS = [
+  "VARIO",
+  "BEAT",
+  "PCX",
+  "GENIO",
+  "ADV",
+  "SPORT",
+  "YAMAHA",
+  "SUZUKI",
+  "KAWASAKI",
+  "PIAGGIO",
 ];
 
 export default function AISearchBar() {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<Motor[] | null>(null);
+  const [results, setResults] = useState<MotorResult[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function search(q: string) {
+  async function search(q: string, mode?: "shortcut") {
     if (!q.trim()) return;
     setLoading(true);
     setError("");
@@ -25,7 +39,7 @@ export default function AISearchBar() {
       const res = await fetch("/api/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: q }),
+        body: JSON.stringify({ query: q, mode }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error ?? "Pencarian gagal");
@@ -48,7 +62,7 @@ export default function AISearchBar() {
           e.preventDefault();
           search(query);
         }}
-        className="flex gap-2"
+        className="flex flex-col gap-2 sm:flex-row"
       >
         <input
           value={query}
@@ -59,23 +73,23 @@ export default function AISearchBar() {
         <button
           type="submit"
           disabled={loading}
-          className="rounded-full bg-rose-600 px-5 py-3 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-50"
+          className="shrink-0 rounded-full bg-rose-600 px-5 py-3 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-50"
         >
           {loading ? "Mencari…" : "✨ Cari AI"}
         </button>
       </form>
 
       <div className="flex flex-wrap gap-2">
-        {EXAMPLES.map((ex) => (
+        {SHORTCUTS.map((s) => (
           <button
-            key={ex}
+            key={s}
             onClick={() => {
-              setQuery(ex);
-              search(ex);
+              setQuery(s);
+              search(s, "shortcut");
             }}
             className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs text-zinc-600 hover:border-rose-300 hover:text-rose-600"
           >
-            {ex}
+            {s}
           </button>
         ))}
       </div>
@@ -91,7 +105,12 @@ export default function AISearchBar() {
           </p>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {results.map((m) => (
-              <MotorCard key={m.id} motor={m} />
+              <MotorCard
+                key={m.id}
+                motor={m}
+                dpMinimal={m.dp_minimal}
+                cicilanMulai={m.cicilan_mulai}
+              />
             ))}
           </div>
         </div>

@@ -1,6 +1,12 @@
 import { notFound } from "next/navigation";
 import { getSupabase } from "@/lib/supabase";
-import { formatRupiah, type Motor } from "@/lib/types";
+import { formatRupiah, type CreditSettings, type Motor } from "@/lib/types";
+import {
+  computeMotorCreditSummary,
+  isCashOnlyByAge,
+  isDpOnlyByAge,
+  CASH_ONLY_MAX_YEAR,
+} from "@/lib/credit-calc";
 import MotorGallery from "@/components/MotorGallery";
 import CreditSimulatorWidget from "@/components/CreditSimulatorWidget";
 
@@ -13,14 +19,17 @@ export default async function MotorDetailPage({
 }) {
   const { slug } = await params;
   const supabase = getSupabase();
-  const { data } = await supabase
-    .from("motors")
-    .select("*")
-    .eq("slug", slug)
-    .single();
+  const [{ data }, { data: settingsData }] = await Promise.all([
+    supabase.from("motors").select("*").eq("slug", slug).single(),
+    supabase.from("credit_settings").select("*").eq("id", true).single(),
+  ]);
 
   if (!data) notFound();
   const motor = data as Motor;
+  const settings = settingsData as CreditSettings | null;
+  const creditSummary = settings ? computeMotorCreditSummary(motor, settings) : null;
+  const cashOnly = isCashOnlyByAge(motor.year);
+  const dpOnly = isDpOnlyByAge(motor.year);
   const wa = process.env.NEXT_PUBLIC_WA_NUMBER;
   const waText = encodeURIComponent(
     `Halo Arta Motor, saya tertarik dengan ${motor.brand} ${motor.model} ${motor.year} (${formatRupiah(motor.price)}). Apakah masih tersedia?`
@@ -31,21 +40,18 @@ export default async function MotorDetailPage({
     ["Model", `${motor.model}${motor.variant ? ` ${motor.variant}` : ""}`],
     ["Kategori", motor.category],
     ["Tahun", String(motor.year)],
-    ["Kilometer", `${motor.km.toLocaleString("id-ID")} km`],
-    ["Warna", motor.color],
-    ["Kapasitas mesin", motor.engine_cc ? `${motor.engine_cc} cc` : "-"],
     [
       "Konsumsi BBM",
       motor.fuel_consumption_kml ? `±${motor.fuel_consumption_kml} km/liter` : "-",
     ],
-    ["Kondisi", motor.condition_note ?? motor.condition],
+    ["Masa Berlaku Pajak", motor.tax_expiry || "-"],
+    ["Masa Berlaku STNK", motor.stnk_expiry || "-"],
     [
-      "Pajak",
-      motor.tax_status === "hidup"
-        ? `Hidup${motor.tax_expiry ? ` (s/d ${motor.tax_expiry})` : ""}`
-        : "Mati",
+      "Surat",
+      [motor.stnk && "STNK", motor.bpkb && "BPKB", motor.faktur && "Faktur"]
+        .filter(Boolean)
+        .join(" + ") || "-",
     ],
-    ["Surat", [motor.stnk && "STNK", motor.bpkb && "BPKB"].filter(Boolean).join(" + ") || "-"],
     ["Status", motor.status],
   ];
 
@@ -64,41 +70,68 @@ export default async function MotorDetailPage({
         </div>
       )}
 
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">
-            {motor.brand} {motor.model}
-            {motor.variant ? ` ${motor.variant}` : ""} {motor.year}
-          </h1>
-          <p className="mt-1 text-3xl font-bold text-rose-600">
-            {formatRupiah(motor.price)}
-          </p>
-          {motor.promo && (
-            <p className="mt-2 inline-block rounded bg-amber-50 px-3 py-1 text-sm font-medium text-amber-700">
-              🎁 {motor.promo}
+      <div>
+        <h1 className="text-lg font-bold sm:text-2xl">
+          {motor.brand} {motor.model}
+          {motor.variant ? ` ${motor.variant}` : ""} {motor.year}
+        </h1>
+        <p className="mt-1 text-[22.5px] font-bold text-rose-600 sm:text-3xl">
+          {formatRupiah(motor.price)}
+        </p>
+        {creditSummary ? (
+          <div className="mt-2 text-xs font-semibold text-rose-600 sm:text-base">
+            <p>DP mulai {formatRupiah(creditSummary.dp_minimal)}</p>
+            {!dpOnly && (
+              <p>Cicilan mulai {formatRupiah(creditSummary.cicilan_mulai)}/bulan</p>
+            )}
+          </div>
+        ) : (
+          cashOnly && (
+            <p className="mt-2 text-xs font-semibold text-zinc-500 sm:text-base">
+              💵 Cash Only — tidak bisa kredit
             </p>
-          )}
-        </div>
-        <a
-          href={`https://wa.me/${wa}?text=${waText}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="rounded-full bg-green-600 px-6 py-3 font-medium text-white hover:bg-green-700"
-        >
-          Tanya / Nego via WhatsApp
-        </a>
+          )
+        )}
+
+        {cashOnly ? (
+          <p className="mt-4 rounded-xl bg-zinc-50 p-4 text-[10.5px] text-zinc-600 sm:text-sm">
+            Motor tahun {motor.year} (tahun {CASH_ONLY_MAX_YEAR} ke bawah)
+            tidak bisa diajukan kredit/cicilan — hanya tersedia pembelian cash.
+          </p>
+        ) : (
+          <CreditSimulatorWidget
+            motorId={motor.id}
+            price={motor.price}
+            defaultDp={creditSummary?.dp_minimal}
+          />
+        )}
+
+        {motor.promo && (
+          <p className="mt-4 inline-block rounded bg-amber-50 px-3 py-1 text-[10.5px] font-medium text-amber-700 sm:text-sm">
+            🎁 {motor.promo}
+          </p>
+        )}
       </div>
 
+      <a
+        href={`https://wa.me/${wa}?text=${waText}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-4 inline-block rounded-full bg-green-600 px-6 py-3 text-xs font-medium text-white hover:bg-green-700 sm:text-base"
+      >
+        Whatsapp
+      </a>
+
       {motor.description && (
-        <p className="mt-6 text-zinc-700">{motor.description}</p>
+        <p className="mt-6 text-xs text-zinc-700 sm:text-base">{motor.description}</p>
       )}
 
-      <h2 className="mb-3 mt-8 text-lg font-bold">Spesifikasi</h2>
+      <h2 className="mb-3 mt-8 text-[13.5px] font-bold sm:text-lg">Spesifikasi</h2>
       <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
         {specs.map(([label, value], i) => (
           <div
             key={label}
-            className={`flex justify-between px-4 py-2.5 text-sm ${i % 2 ? "bg-zinc-50" : ""}`}
+            className={`flex justify-between px-4 py-2.5 text-[10.5px] sm:text-sm ${i % 2 ? "bg-zinc-50" : ""}`}
           >
             <span className="text-zinc-500">{label}</span>
             <span className="font-medium capitalize">{value}</span>
@@ -106,9 +139,7 @@ export default async function MotorDetailPage({
         ))}
       </div>
 
-      <CreditSimulatorWidget motorId={motor.id} price={motor.price} />
-
-      <p className="mt-6 rounded-xl bg-sky-50 p-4 text-sm text-sky-800">
+      <p className="mt-6 rounded-xl bg-sky-50 p-4 text-[10.5px] text-sky-800 sm:text-sm">
         💬 Mau bandingkan dengan motor lain atau tanya kelengkapan surat? Tanya
         asisten AI kami lewat tombol chat di pojok kanan bawah.
       </p>

@@ -20,15 +20,20 @@ export const motorInputSchema = z
   tax_status: z.enum(["hidup", "mati"]),
   tax_expiry: z.string().optional().nullable(),
   stnk: z.coerce.boolean().default(false),
+  stnk_expiry: z.string().optional().nullable(),
   bpkb: z.coerce.boolean().default(false),
+  faktur: z.coerce.boolean().default(false),
   status: z.enum(["tersedia", "booking", "terjual"]),
   promo: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
   tags: z.array(z.string()).default([]),
-  images: z.array(z.string()).max(6, "Maksimal 6 foto per motor").default([]),
+  images: z.array(z.string()).max(8, "Maksimal 8 foto per motor").default([]),
   // Subsidi DP dari penjual — bisa positif (menambah DP efektif, angsuran
   // lebih ringan) atau negatif (surcharge, mengurangi DP efektif).
   dp_discount: z.coerce.number().default(0),
+  // DP manual yang diisi admin (rupiah) — dipakai kalkulator untuk
+  // menentukan DP Minimal & Cicilan mulai di katalog. Kosong = otomatis.
+  dp_amount: z.coerce.number().int().min(0).optional().nullable(),
   })
   .refine(
     (data) => {

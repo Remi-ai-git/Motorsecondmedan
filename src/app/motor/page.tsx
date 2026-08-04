@@ -1,7 +1,8 @@
 import { getSupabase } from "@/lib/supabase";
 import MotorCard from "@/components/MotorCard";
 import AISearchBar from "@/components/AISearchBar";
-import type { Motor } from "@/lib/types";
+import type { CreditSettings, Motor } from "@/lib/types";
+import { computeMotorCreditSummary } from "@/lib/credit-calc";
 import Link from "next/link";
 
 export const revalidate = 60;
@@ -23,8 +24,12 @@ export default async function KatalogPage({
     .order("price");
   if (kategori && kategori !== "semua") q = q.eq("category", kategori);
 
-  const { data } = await q;
+  const [{ data }, { data: settingsData }] = await Promise.all([
+    q,
+    supabase.from("credit_settings").select("*").eq("id", true).single(),
+  ]);
   const motors = (data as Motor[]) ?? [];
+  const settings = settingsData as CreditSettings | null;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
@@ -33,37 +38,51 @@ export default async function KatalogPage({
         Semua unit tersedia, surat lengkap, siap dicek langsung.
       </p>
 
-      <div className="mb-8">
-        <AISearchBar />
-      </div>
+      <div className="flex flex-col">
+        {/* Widget Cari Motor dengan AI — di HP dipindah ke bawah katalog,
+            di layar besar tetap di atas seperti semula. */}
+        <div className="order-2 mt-8 sm:order-1 sm:mb-8 sm:mt-0">
+          <AISearchBar />
+        </div>
 
-      <div className="mb-6 flex flex-wrap gap-2">
-        {CATEGORIES.map((c) => (
-          <Link
-            key={c}
-            href={c === "semua" ? "/motor" : `/motor?kategori=${c}`}
-            className={`rounded-full px-4 py-1.5 text-sm capitalize ${
-              (kategori ?? "semua") === c
-                ? "bg-rose-600 text-white"
-                : "border border-zinc-200 bg-white text-zinc-600 hover:border-rose-300"
-            }`}
-          >
-            {c}
-          </Link>
-        ))}
-      </div>
+        <div className="order-1 sm:order-2">
+          <div className="mb-6 flex flex-wrap gap-2">
+            {CATEGORIES.map((c) => (
+              <Link
+                key={c}
+                href={c === "semua" ? "/motor" : `/motor?kategori=${c}`}
+                className={`rounded-full px-4 py-1.5 text-sm capitalize ${
+                  (kategori ?? "semua") === c
+                    ? "bg-rose-600 text-white"
+                    : "border border-zinc-200 bg-white text-zinc-600 hover:border-rose-300"
+                }`}
+              >
+                {c}
+              </Link>
+            ))}
+          </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {motors.map((m) => (
-          <MotorCard key={m.id} motor={m} />
-        ))}
-      </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {motors.map((m) => {
+              const summary = settings ? computeMotorCreditSummary(m, settings) : null;
+              return (
+                <MotorCard
+                  key={m.id}
+                  motor={m}
+                  dpMinimal={summary?.dp_minimal}
+                  cicilanMulai={summary?.cicilan_mulai}
+                />
+              );
+            })}
+          </div>
 
-      {motors.length === 0 && (
-        <p className="py-10 text-center text-zinc-500">
-          Belum ada unit di kategori ini.
-        </p>
-      )}
+          {motors.length === 0 && (
+            <p className="py-10 text-center text-zinc-500">
+              Belum ada unit di kategori ini.
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

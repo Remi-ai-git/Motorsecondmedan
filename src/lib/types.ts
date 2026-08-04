@@ -16,7 +16,9 @@ export interface Motor {
   tax_status: "hidup" | "mati";
   tax_expiry: string | null;
   stnk: boolean;
+  stnk_expiry: string | null;
   bpkb: boolean;
+  faktur: boolean;
   status: "tersedia" | "booking" | "terjual";
   promo: string | null;
   description: string | null;
@@ -24,6 +26,13 @@ export interface Motor {
   images: string[];
   /** Subsidi tambahan ke DP pembeli, diatur admin per motor (rupiah). */
   dp_discount: number;
+  /**
+   * DP yang diisi manual oleh admin (rupiah) — dipakai sebagai input ke
+   * kalkulator kredit untuk menentukan "DP Minimal" & "Cicilan mulai" yang
+   * tampil di katalog. Kalau kosong (null), sistem fallback ke taksiran
+   * otomatis dari persentase DP minimum di credit_settings.
+   */
+  dp_amount: number | null;
   created_at: string;
   updated_at: string;
 }
