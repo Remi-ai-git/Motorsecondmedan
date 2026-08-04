@@ -38,45 +38,51 @@ export default async function KatalogPage({
         Semua unit tersedia, surat lengkap, siap dicek langsung.
       </p>
 
-      <div className="mb-8">
-        <AISearchBar />
-      </div>
+      <div className="flex flex-col">
+        {/* Widget Cari Motor dengan AI — di HP dipindah ke bawah katalog,
+            di layar besar tetap di atas seperti semula. */}
+        <div className="order-2 mt-8 sm:order-1 sm:mb-8 sm:mt-0">
+          <AISearchBar />
+        </div>
 
-      <div className="mb-6 flex flex-wrap gap-2">
-        {CATEGORIES.map((c) => (
-          <Link
-            key={c}
-            href={c === "semua" ? "/motor" : `/motor?kategori=${c}`}
-            className={`rounded-full px-4 py-1.5 text-sm capitalize ${
-              (kategori ?? "semua") === c
-                ? "bg-rose-600 text-white"
-                : "border border-zinc-200 bg-white text-zinc-600 hover:border-rose-300"
-            }`}
-          >
-            {c}
-          </Link>
-        ))}
-      </div>
+        <div className="order-1 sm:order-2">
+          <div className="mb-6 flex flex-wrap gap-2">
+            {CATEGORIES.map((c) => (
+              <Link
+                key={c}
+                href={c === "semua" ? "/motor" : `/motor?kategori=${c}`}
+                className={`rounded-full px-4 py-1.5 text-sm capitalize ${
+                  (kategori ?? "semua") === c
+                    ? "bg-rose-600 text-white"
+                    : "border border-zinc-200 bg-white text-zinc-600 hover:border-rose-300"
+                }`}
+              >
+                {c}
+              </Link>
+            ))}
+          </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {motors.map((m) => {
-          const summary = settings ? computeMotorCreditSummary(m, settings) : null;
-          return (
-            <MotorCard
-              key={m.id}
-              motor={m}
-              dpMinimal={summary?.dp_minimal}
-              cicilanMulai={summary?.cicilan_mulai}
-            />
-          );
-        })}
-      </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {motors.map((m) => {
+              const summary = settings ? computeMotorCreditSummary(m, settings) : null;
+              return (
+                <MotorCard
+                  key={m.id}
+                  motor={m}
+                  dpMinimal={summary?.dp_minimal}
+                  cicilanMulai={summary?.cicilan_mulai}
+                />
+              );
+            })}
+          </div>
 
-      {motors.length === 0 && (
-        <p className="py-10 text-center text-zinc-500">
-          Belum ada unit di kategori ini.
-        </p>
-      )}
+          {motors.length === 0 && (
+            <p className="py-10 text-center text-zinc-500">
+              Belum ada unit di kategori ini.
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

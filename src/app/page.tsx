@@ -116,7 +116,7 @@ export default async function Home() {
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-bold">Stok Terbaru</h2>
           <Link href="/motor" className="text-sm text-rose-600 hover:underline">
-            Lihat semua →
+            Lihat Semua Stok →
           </Link>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
