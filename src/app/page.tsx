@@ -97,13 +97,13 @@ export default async function Home() {
           <div className="relative hidden h-72 items-center justify-center lg:flex">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="https://ugxhbuwgafzdtmhnjguh.supabase.co/storage/v1/object/public/motor-images/motors/4dd2f495-dd72-430c-a263-a785ca0e66c6-whatsapp-image-2026-07-27-at-17.38.10.jpeg"
+              src="https://zipkoxltnwojyphroocj.supabase.co/storage/v1/object/public/motor-images/motors/4dd2f495-dd72-430c-a263-a785ca0e66c6-whatsapp-image-2026-07-27-at-17.38.10.jpeg"
               alt="Unit motor Arta Motor"
               className="absolute right-4 top-2 h-56 w-44 rotate-2 rounded-2xl border-4 border-zinc-800 object-cover shadow-2xl"
             />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="https://ugxhbuwgafzdtmhnjguh.supabase.co/storage/v1/object/public/motor-images/motors/5d9d9a74-b1d4-4660-9c66-d8b1480f2afb-whatsapp-image-2026-07-27-at-17.38.13.jpeg"
+              src="https://zipkoxltnwojyphroocj.supabase.co/storage/v1/object/public/motor-images/motors/5d9d9a74-b1d4-4660-9c66-d8b1480f2afb-whatsapp-image-2026-07-27-at-17.38.13.jpeg"
               alt="Unit motor Arta Motor"
               className="absolute bottom-0 left-0 h-48 w-40 -rotate-3 rounded-2xl border-4 border-zinc-800 object-cover shadow-2xl"
             />
