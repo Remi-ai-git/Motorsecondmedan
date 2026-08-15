@@ -2,7 +2,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { getSupabase } from "@/lib/supabase";
 import MotorCard from "@/components/MotorCard";
-import AISearchBar from "@/components/AISearchBar";
 import type { CreditSettings, Motor } from "@/lib/types";
 import { computeMotorCreditSummary } from "@/lib/credit-calc";
 
@@ -140,15 +139,6 @@ export default async function Home() {
             Lihat Semua Produk
           </Link>
         </div>
-      </section>
-
-      {/* AI Search */}
-      <section className="mx-auto max-w-6xl px-4 pb-14">
-        <h2 className="mb-1 text-xl font-bold">Cari Motor dengan AI ✨</h2>
-        <p className="mb-4 text-sm text-zinc-500">
-          Ketik kebutuhan Anda dengan bahasa sehari-hari.
-        </p>
-        <AISearchBar />
       </section>
 
       {/* Didukung Oleh (partner leasing) */}
