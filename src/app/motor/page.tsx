@@ -8,12 +8,37 @@ export const revalidate = 60;
 
 const CATEGORIES = ["semua", "matic", "bebek", "sport", "trail"] as const;
 
+// Shortcut Model/Brand — klik shortcut memunculkan semua produk yang
+// model, variant, atau brand-nya mengandung kata ini (pencocokan substring).
+const SHORTCUTS = [
+  "VARIO",
+  "SCOOPY",
+  "BEAT",
+  "PCX",
+  "GENIO",
+  "ADV",
+  "SPORT",
+  "YAMAHA",
+  "HONDA",
+  "SUZUKI",
+  "KAWASAKI",
+  "VESPA",
+] as const;
+
+function buildHref(params: { kategori?: string; cari?: string }) {
+  const sp = new URLSearchParams();
+  if (params.kategori && params.kategori !== "semua") sp.set("kategori", params.kategori);
+  if (params.cari) sp.set("cari", params.cari);
+  const qs = sp.toString();
+  return qs ? `/motor?${qs}` : "/motor";
+}
+
 export default async function KatalogPage({
   searchParams,
 }: {
-  searchParams: Promise<{ kategori?: string }>;
+  searchParams: Promise<{ kategori?: string; cari?: string }>;
 }) {
-  const { kategori } = await searchParams;
+  const { kategori, cari } = await searchParams;
   const supabase = getSupabase();
 
   let q = supabase
@@ -22,6 +47,10 @@ export default async function KatalogPage({
     .eq("status", "tersedia")
     .order("price");
   if (kategori && kategori !== "semua") q = q.eq("category", kategori);
+  if (cari) {
+    const kw = cari.trim().replace(/[%,]/g, "");
+    q = q.or(`model.ilike.%${kw}%,variant.ilike.%${kw}%,brand.ilike.%${kw}%`);
+  }
 
   const [{ data }, { data: settingsData }] = await Promise.all([
     q,
@@ -37,11 +66,11 @@ export default async function KatalogPage({
         Semua unit tersedia, surat lengkap, siap dicek langsung.
       </p>
 
-      <div className="mb-6 flex flex-wrap gap-2">
+      <div className="mb-3 flex flex-wrap gap-2">
         {CATEGORIES.map((c) => (
           <Link
             key={c}
-            href={c === "semua" ? "/motor" : `/motor?kategori=${c}`}
+            href={buildHref({ kategori: c, cari })}
             className={`rounded-full px-4 py-1.5 text-sm capitalize ${
               (kategori ?? "semua") === c
                 ? "bg-rose-600 text-white"
@@ -49,6 +78,32 @@ export default async function KatalogPage({
             }`}
           >
             {c}
+          </Link>
+        ))}
+      </div>
+
+      <div className="mb-6 flex flex-wrap gap-2">
+        <Link
+          href={buildHref({ kategori })}
+          className={`rounded-full px-3 py-1 text-xs font-medium ${
+            !cari
+              ? "bg-zinc-800 text-white"
+              : "border border-zinc-200 bg-white text-zinc-600 hover:border-rose-300"
+          }`}
+        >
+          Semua Model
+        </Link>
+        {SHORTCUTS.map((s) => (
+          <Link
+            key={s}
+            href={buildHref({ kategori, cari: s })}
+            className={`rounded-full px-3 py-1 text-xs font-medium ${
+              cari?.toUpperCase() === s
+                ? "bg-rose-600 text-white"
+                : "border border-zinc-200 bg-white text-zinc-600 hover:border-rose-300"
+            }`}
+          >
+            {s}
           </Link>
         ))}
       </div>
@@ -69,7 +124,7 @@ export default async function KatalogPage({
 
       {motors.length === 0 && (
         <p className="py-10 text-center text-zinc-500">
-          Belum ada unit di kategori ini.
+          Belum ada unit yang cocok dengan filter ini.
         </p>
       )}
     </div>
