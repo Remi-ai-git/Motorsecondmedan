@@ -32,7 +32,7 @@ export default async function MotorDetailPage({
   const dpOnly = isDpOnlyByAge(motor.year);
   const wa = process.env.NEXT_PUBLIC_WA_NUMBER;
   const waText = encodeURIComponent(
-    `Halo Arta Motor, saya tertarik dengan ${motor.brand} ${motor.model} ${motor.year} (${formatRupiah(motor.price)}). Apakah masih tersedia?`
+    `Halo Arta Motor, saya tertarik dengan ${motor.brand} ${motor.model} ${motor.year} (${formatRupiah(motor.price)})${motor.plat_nomor ? ` - Plat ${motor.plat_nomor}` : ""}. Apakah masih tersedia?`
   );
 
   const specs: [string, string][] = [
