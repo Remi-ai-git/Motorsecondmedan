@@ -12,6 +12,13 @@ import {
 } from "@/lib/motor-model-catalog";
 import { typesForModel } from "@/lib/motor-type-catalog";
 
+/** Format string angka jadi pakai titik ribuan, contoh: "5000000" -> "5.000.000". */
+function formatThousands(digits: string): string {
+  const clean = digits.replace(/\D/g, "");
+  if (!clean) return "";
+  return clean.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
 /** Brand yang tersimpan di DB -> pilihan dropdown ("Lainnya" kalau tidak dikenal). */
 function brandToChoice(brand: string): string {
   const upper = brand.trim().toUpperCase();
@@ -38,6 +45,7 @@ type FormState = {
   stnk_expiry: string;
   bpkb: boolean;
   faktur: boolean;
+  plat_nomor: string;
   status: (typeof STATUS_OPTIONS)[number];
   promo: string;
   description: string;
@@ -68,6 +76,7 @@ function toFormState(m?: Motor): FormState {
     stnk_expiry: m?.stnk_expiry ?? "",
     bpkb: m?.bpkb ?? true,
     faktur: m?.faktur ?? false,
+    plat_nomor: m?.plat_nomor ?? "",
     status: m?.status ?? "tersedia",
     promo: m?.promo ?? "",
     description: m?.description ?? "",
@@ -188,6 +197,7 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
       stnk_expiry: form.stnk_expiry || null,
       bpkb: form.bpkb,
       faktur: form.faktur,
+      plat_nomor: form.plat_nomor || null,
       status: form.status,
       promo: form.promo || null,
       description: form.description || null,
@@ -442,6 +452,18 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
             placeholder="Bebas, contoh: 2029"
           />
         </div>
+        <div>
+          <label className={labelClass}>Nomor plat kendaraan (opsional)</label>
+          <input
+            className={inputClass}
+            value={form.plat_nomor}
+            onChange={(e) => set("plat_nomor", e.target.value.toUpperCase())}
+            placeholder="Contoh: BK 1234 XY"
+          />
+          <p className="mt-1 text-xs text-zinc-400">
+            Untuk catatan internal admin — tidak ditampilkan di halaman publik.
+          </p>
+        </div>
         <div className="flex items-center gap-4 pt-6">
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.stnk} onChange={(e) => set("stnk", e.target.checked)} />
@@ -475,11 +497,11 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
         <div>
           <label className={labelClass}>DP untuk katalog (Rp)</label>
           <input
-            type="number"
-            min={0}
+            type="text"
+            inputMode="numeric"
             className={inputClass}
-            value={form.dp_amount}
-            onChange={(e) => set("dp_amount", e.target.value)}
+            value={formatThousands(form.dp_amount)}
+            onChange={(e) => set("dp_amount", e.target.value.replace(/\D/g, ""))}
             placeholder="Kosongkan untuk hitung otomatis dari % DP minimum"
           />
           <p className="mt-1 text-xs text-zinc-400">

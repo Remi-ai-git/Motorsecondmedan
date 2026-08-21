@@ -23,6 +23,8 @@ export const motorInputSchema = z
   stnk_expiry: z.string().optional().nullable(),
   bpkb: z.coerce.boolean().default(false),
   faktur: z.coerce.boolean().default(false),
+  // Nomor plat kendaraan — internal/admin saja, tidak ditampilkan ke publik.
+  plat_nomor: z.string().optional().nullable(),
   status: z.enum(["tersedia", "booking", "terjual"]),
   promo: z.string().optional().nullable(),
   description: z.string().optional().nullable(),

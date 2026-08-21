@@ -19,6 +19,8 @@ export interface Motor {
   stnk_expiry: string | null;
   bpkb: boolean;
   faktur: boolean;
+  /** Nomor plat kendaraan (opsional, diisi admin — bukan untuk publik). */
+  plat_nomor: string | null;
   status: "tersedia" | "booking" | "terjual";
   promo: string | null;
   description: string | null;
