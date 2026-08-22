@@ -24,7 +24,7 @@ export default function MotorCard({
   return (
     <div className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white transition hover:shadow-lg">
       <Link href={`/motor/${motor.slug}`} className="block">
-        <div className="relative flex h-28 items-center justify-center overflow-hidden bg-gradient-to-br from-zinc-800 to-zinc-600 text-white sm:h-36">
+        <div className="relative flex h-44 items-center justify-center overflow-hidden bg-gradient-to-br from-zinc-800 to-zinc-600 text-white sm:h-52">
           {motor.images?.[0] ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
