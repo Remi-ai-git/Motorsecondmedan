@@ -24,7 +24,7 @@ export default function MotorCard({
   return (
     <div className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white transition hover:shadow-lg">
       <Link href={`/motor/${motor.slug}`} className="block">
-        <div className="relative flex h-36 items-center justify-center overflow-hidden bg-gradient-to-br from-zinc-800 to-zinc-600 text-white">
+        <div className="relative flex h-28 items-center justify-center overflow-hidden bg-gradient-to-br from-zinc-800 to-zinc-600 text-white sm:h-36">
           {motor.images?.[0] ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -42,7 +42,7 @@ export default function MotorCard({
             </div>
           )}
         </div>
-        <div className="space-y-0.5 p-2.5 pb-0">
+        <div className="space-y-0 p-2 pb-0 sm:space-y-0.5 sm:p-2.5">
           <div className="flex items-center justify-between gap-1">
             <h3 className="text-[13.5px] font-semibold leading-tight">
               {motor.brand} {motor.model}
@@ -54,17 +54,17 @@ export default function MotorCard({
               {motor.category}
             </span>
           </div>
-          <p className="text-base font-bold leading-tight text-rose-600">
+          <p className="text-base font-bold leading-none text-rose-600">
             {formatRupiah(motor.price)}
           </p>
           {dpMinimal != null && cicilanMulai != null ? (
-            <div className="text-sm font-semibold leading-tight text-rose-600">
+            <div className="text-sm font-semibold leading-none text-rose-600">
               <p>DP mulai {formatRupiah(dpMinimal)}</p>
-              {!dpOnly && <p>Cicilan mulai {formatRupiah(cicilanMulai)}/bulan</p>}
+              {!dpOnly && <p className="mt-0.5">Cicilan mulai {formatRupiah(cicilanMulai)}/bulan</p>}
             </div>
           ) : (
             cashOnly && (
-              <p className="text-[12.25px] font-semibold leading-tight text-zinc-500">
+              <p className="text-[12.25px] font-semibold leading-none text-zinc-500">
                 💵 Cash Only — tidak bisa kredit
               </p>
             )
@@ -72,7 +72,7 @@ export default function MotorCard({
         </div>
       </Link>
       {!cashOnly && !dpOnly && (
-        <div className="px-2.5 pt-1">
+        <div className="px-2 pt-0.5 sm:px-2.5 sm:pt-1">
           <Link
             href={`/motor/${motor.slug}#kredit`}
             className="block w-full rounded-full border border-rose-600 px-3 py-1 text-center text-xs font-medium text-rose-600 transition hover:bg-rose-600 hover:text-white"
@@ -82,13 +82,13 @@ export default function MotorCard({
         </div>
       )}
       <Link href={`/motor/${motor.slug}`} className="block">
-        <div className="space-y-0.5 p-2.5 pt-1">
-          <p className="text-[10.5px] leading-tight text-zinc-500">
+        <div className="space-y-0 p-2 pt-0.5 sm:space-y-0.5 sm:p-2.5 sm:pt-1">
+          <p className="text-[10.5px] leading-none text-zinc-500">
             {motor.year} · {motor.km.toLocaleString("id-ID")} km · Masa Berlaku Pajak:{" "}
             {motor.tax_expiry || "-"}
           </p>
           {motor.promo && (
-            <p className="inline-block rounded bg-amber-50 px-2 py-0.5 text-[10.5px] font-medium leading-none text-amber-700">
+            <p className="mt-0.5 inline-block rounded bg-amber-50 px-2 py-0.5 text-[10.5px] font-medium leading-none text-amber-700">
               🎁 {motor.promo}
             </p>
           )}
