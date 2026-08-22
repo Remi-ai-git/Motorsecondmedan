@@ -60,15 +60,15 @@ export default async function KatalogPage({
   const settings = settingsData as CreditSettings | null;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      <h1 className="mb-6 text-2xl font-bold">Katalog Motor</h1>
+    <div className="mx-auto max-w-6xl px-4 py-6 sm:py-10">
+      <h1 className="mb-3 text-xl font-bold sm:mb-6 sm:text-2xl">Katalog Motor</h1>
 
-      <div className="mb-3 flex flex-wrap gap-2">
+      <div className="mb-2 flex flex-wrap gap-1.5 sm:mb-3 sm:gap-2">
         {CATEGORIES.map((c) => (
           <Link
             key={c}
             href={buildHref({ kategori: c, cari })}
-            className={`rounded-full px-4 py-1.5 text-sm capitalize ${
+            className={`rounded-full px-3 py-1 text-xs capitalize sm:px-4 sm:py-1.5 sm:text-sm ${
               (kategori ?? "semua") === c
                 ? "bg-rose-600 text-white"
                 : "border border-zinc-200 bg-white text-zinc-600 hover:border-rose-300"
@@ -79,10 +79,10 @@ export default async function KatalogPage({
         ))}
       </div>
 
-      <div className="mb-6 flex flex-wrap gap-2">
+      <div className="mb-3 flex flex-wrap gap-1.5 sm:mb-6 sm:gap-2">
         <Link
           href={buildHref({ kategori })}
-          className={`rounded-full px-3 py-1 text-xs font-medium ${
+          className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium sm:px-3 sm:py-1 sm:text-xs ${
             !cari
               ? "bg-zinc-800 text-white"
               : "border border-zinc-200 bg-white text-zinc-600 hover:border-rose-300"
@@ -94,7 +94,7 @@ export default async function KatalogPage({
           <Link
             key={s}
             href={buildHref({ kategori, cari: s })}
-            className={`rounded-full px-3 py-1 text-xs font-medium ${
+            className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium sm:px-3 sm:py-1 sm:text-xs ${
               cari?.toUpperCase() === s
                 ? "bg-rose-600 text-white"
                 : "border border-zinc-200 bg-white text-zinc-600 hover:border-rose-300"
