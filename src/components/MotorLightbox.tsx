@@ -6,7 +6,7 @@ const MIN_SCALE = 1;
 const MAX_SCALE = 4;
 const DOUBLE_TAP_ZOOM = 2.5;
 const SWIPE_THRESHOLD = 50;
-const DOUBLE_TAP_MS = 300;
+const DOUBLE_TAP_MS = 400;
 
 function distance(t1: React.Touch, t2: React.Touch) {
   return Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
@@ -17,11 +17,20 @@ export default function MotorLightbox({
   alt,
   initialIndex,
   onClose,
+  openedAt,
 }: {
   images: string[];
   alt: string;
   initialIndex: number;
   onClose: () => void;
+  /**
+   * Timestamp (Date.now()) dari tap/klik di foto galeri yang MEMBUKA lightbox
+   * ini. Dipakai buat "menyambung" deteksi double-tap: tap pertama membuka
+   * lightbox (mount komponen baru, jadi lastTap di sini pasti 0 kalau tidak
+   * di-seed) — tanpa ini, tap kedua yang harusnya jadi "tap ke-2" malah
+   * dianggap tap pertama lagi, jadi butuh 3x tap baru zoom.
+   */
+  openedAt?: number;
 }) {
   const [index, setIndex] = useState(initialIndex);
   const [scale, setScale] = useState(1);
@@ -36,7 +45,7 @@ export default function MotorLightbox({
   const pinchStart = useRef<{ dist: number; scale: number } | null>(null);
   const panStart = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
-  const lastTap = useRef(0);
+  const lastTap = useRef(openedAt ?? 0);
   const wheelIdleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const resetZoom = () => {
