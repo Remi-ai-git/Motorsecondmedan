@@ -27,11 +27,17 @@ export default function MotorLightbox({
   const [scale, setScale] = useState(1);
   const [translate, setTranslate] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
+  // true selama gesture kontinu (pinch 2 jari, pan geser) supaya transform
+  // langsung mengikuti jari 1:1 tanpa transition CSS (bikin terasa nge-lag).
+  // Transition CSS cuma dipakai untuk aksi diskrit (double click/tap zoom,
+  // snap-back) supaya animasinya smooth.
+  const [isGesturing, setIsGesturing] = useState(false);
 
   const pinchStart = useRef<{ dist: number; scale: number } | null>(null);
   const panStart = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const lastTap = useRef(0);
+  const wheelIdleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const resetZoom = () => {
     setScale(1);
@@ -55,6 +61,7 @@ export default function MotorLightbox({
     return () => {
       document.body.style.overflow = prevOverflow;
       window.removeEventListener("keydown", onKey);
+      if (wheelIdleTimer.current) clearTimeout(wheelIdleTimer.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index]);
@@ -69,7 +76,13 @@ export default function MotorLightbox({
 
   function onWheel(e: React.WheelEvent) {
     e.preventDefault();
-    const next = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale - e.deltaY * 0.01));
+    // Scroll/trackpad ngirim banyak event kecil beruntun — matikan transition
+    // selama itu (isGesturing) supaya scale ngikutin langsung tanpa lag, baru
+    // nyalain transition lagi buat "settle" halus begitu scroll-nya berhenti.
+    setIsGesturing(true);
+    if (wheelIdleTimer.current) clearTimeout(wheelIdleTimer.current);
+    wheelIdleTimer.current = setTimeout(() => setIsGesturing(false), 150);
+    const next = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale - e.deltaY * 0.0035));
     setScale(next);
     if (next === 1) setTranslate({ x: 0, y: 0 });
   }
@@ -78,6 +91,7 @@ export default function MotorLightbox({
     if (e.touches.length === 2) {
       pinchStart.current = { dist: distance(e.touches[0], e.touches[1]), scale };
       swipeStart.current = null;
+      setIsGesturing(true);
     } else if (e.touches.length === 1) {
       const now = Date.now();
       if (now - lastTap.current < DOUBLE_TAP_MS) {
@@ -94,6 +108,7 @@ export default function MotorLightbox({
           tx: translate.x,
           ty: translate.y,
         };
+        setIsGesturing(true);
       } else {
         swipeStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
       }
@@ -123,6 +138,7 @@ export default function MotorLightbox({
         goTo(index + (dx < 0 ? 1 : -1));
       }
     }
+    setIsGesturing(false);
     if (scale <= 1.05 && scale !== 1) resetZoom();
     pinchStart.current = null;
     panStart.current = null;
@@ -132,6 +148,7 @@ export default function MotorLightbox({
   function onMouseDown(e: React.MouseEvent) {
     if (scale <= 1) return;
     setDragging(true);
+    setIsGesturing(true);
     panStart.current = { x: e.clientX, y: e.clientY, tx: translate.x, ty: translate.y };
   }
   function onMouseMove(e: React.MouseEvent) {
@@ -142,6 +159,7 @@ export default function MotorLightbox({
   }
   function onMouseUp() {
     setDragging(false);
+    setIsGesturing(false);
     panStart.current = null;
   }
 
@@ -208,10 +226,13 @@ export default function MotorLightbox({
           src={images[index]}
           alt={alt}
           draggable={false}
-          className={`max-h-full max-w-full object-contain ${dragging ? "" : "transition-transform duration-150"}`}
+          className={`max-h-full max-w-full object-contain ${
+            isGesturing ? "" : "transition-transform duration-200 ease-out"
+          }`}
           style={{
             transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
             cursor: scale > 1 ? (dragging ? "grabbing" : "grab") : "default",
+            willChange: "transform",
           }}
         />
       </div>
