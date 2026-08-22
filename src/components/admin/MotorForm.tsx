@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import type { Motor } from "@/lib/types";
+import { formatRupiah, type Motor } from "@/lib/types";
 import { CATEGORY_OPTIONS, TAX_STATUS_OPTIONS, STATUS_OPTIONS } from "@/lib/motor-schema";
 import {
   BRAND_OPTIONS,
@@ -10,6 +10,15 @@ import {
   OTHER_BRAND_OPTION,
   modelsForBrand,
 } from "@/lib/motor-model-catalog";
+import { typesForModel } from "@/lib/motor-type-catalog";
+import { getMarketPrice } from "@/lib/motor-market-price";
+
+/** Format string angka jadi pakai titik ribuan, contoh: "5000000" -> "5.000.000". */
+function formatThousands(digits: string): string {
+  const clean = digits.replace(/\D/g, "");
+  if (!clean) return "";
+  return clean.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
 
 /** Brand yang tersimpan di DB -> pilihan dropdown ("Lainnya" kalau tidak dikenal). */
 function brandToChoice(brand: string): string {
@@ -34,13 +43,17 @@ type FormState = {
   tax_status: (typeof TAX_STATUS_OPTIONS)[number];
   tax_expiry: string;
   stnk: boolean;
+  stnk_expiry: string;
   bpkb: boolean;
+  faktur: boolean;
+  plat_nomor: string;
   status: (typeof STATUS_OPTIONS)[number];
   promo: string;
   description: string;
   tags: string;
   images: string[];
   dp_discount: string;
+  dp_amount: string;
 };
 
 function toFormState(m?: Motor): FormState {
@@ -61,13 +74,17 @@ function toFormState(m?: Motor): FormState {
     tax_status: m?.tax_status ?? "hidup",
     tax_expiry: m?.tax_expiry ?? "",
     stnk: m?.stnk ?? true,
+    stnk_expiry: m?.stnk_expiry ?? "",
     bpkb: m?.bpkb ?? true,
+    faktur: m?.faktur ?? false,
+    plat_nomor: m?.plat_nomor ?? "",
     status: m?.status ?? "tersedia",
     promo: m?.promo ?? "",
     description: m?.description ?? "",
     tags: m?.tags?.join(", ") ?? "",
     images: m?.images ?? [],
     dp_discount: m ? String(m.dp_discount ?? 0) : "0",
+    dp_amount: m?.dp_amount != null ? String(m.dp_amount) : "",
   };
 }
 
@@ -89,6 +106,26 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
     form.model.trim() !== "" &&
     !modelOptions.some((m) => m.toUpperCase() === form.model.trim().toUpperCase());
 
+  // Daftar Type tergantung Brand+Model yang dipilih. Kalau kombinasinya
+  // belum terdaftar (model baru/brand "Lainnya"), fallback ke input bebas.
+  const typeOptions =
+    !isOtherBrand && form.model.trim() !== "" ? typesForModel(brandChoice, form.model) : [];
+  const hasTypeOptions = typeOptions.length > 0;
+  const currentTypeUnknown =
+    hasTypeOptions &&
+    form.variant.trim() !== "" &&
+    !typeOptions.some((t) => t.toUpperCase() === form.variant.trim().toUpperCase());
+
+  // OTR & MAX PENCAIRAN — sama seperti kalkulator Excel leasing (Tools!D16 &
+  // D18): OTR = Harga Market Price resmi (Type + Tahun), MAX PENCAIRAN = OTR
+  // dikurangi DP PENUH (dp_amount) yang diisi di bawah. Ditampilkan sebagai
+  // info saja supaya admin bisa cek angka ini cocok dengan Excel leasing.
+  const yearNum = Number(form.year);
+  const otr =
+    getMarketPrice(form.variant, yearNum) ?? (form.price ? Number(form.price) : null);
+  const dpAmountNum = form.dp_amount ? Number(form.dp_amount) : null;
+  const maxPencairan = otr != null && dpAmountNum != null ? otr - dpAmountNum : null;
+
   function handleBrandChoice(choice: string) {
     setBrandChoice(choice);
     if (choice === OTHER_BRAND_OPTION) {
@@ -103,7 +140,7 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
     setForm((f) => ({ ...f, [key]: value }));
   }
 
-  const MAX_PHOTOS = 6;
+  const MAX_PHOTOS = 8;
 
   async function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
@@ -168,7 +205,10 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
       tax_status: form.tax_status,
       tax_expiry: form.tax_expiry || null,
       stnk: form.stnk,
+      stnk_expiry: form.stnk_expiry || null,
       bpkb: form.bpkb,
+      faktur: form.faktur,
+      plat_nomor: form.plat_nomor || null,
       status: form.status,
       promo: form.promo || null,
       description: form.description || null,
@@ -178,6 +218,7 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
         .filter(Boolean),
       images: form.images,
       dp_discount: form.dp_discount ? Number(form.dp_discount) : 0,
+      dp_amount: form.dp_amount ? Number(form.dp_amount) : null,
     };
 
     try {
@@ -302,7 +343,10 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
               required
               className={inputClass}
               value={form.model}
-              onChange={(e) => set("model", e.target.value)}
+              onChange={(e) => {
+                set("model", e.target.value);
+                set("variant", ""); // reset Type tiap ganti model supaya tidak nyangkut Type model lama
+              }}
             >
               <option value="" disabled>
                 -- Pilih model --
@@ -319,12 +363,39 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
           )}
           <p className="mt-1 text-xs text-zinc-400">
             Daftar model sesuai tabel resmi leasing — supaya perhitungan kredit
-            (PGI) akurat. Detail trim/varian diisi di kolom Varian.
+            (PGI) akurat. Detail trim diisi di kolom Type.
           </p>
         </div>
         <div>
-          <label className={labelClass}>Varian</label>
-          <input className={inputClass} value={form.variant} onChange={(e) => set("variant", e.target.value)} placeholder="Street / CBS / dll" />
+          <label className={labelClass}>Type</label>
+          {hasTypeOptions ? (
+            <select
+              className={inputClass}
+              value={form.variant}
+              onChange={(e) => set("variant", e.target.value)}
+            >
+              <option value="">-- Pilih type (opsional) --</option>
+              {currentTypeUnknown && (
+                <option value={form.variant}>{form.variant} (data lama — pilih ulang)</option>
+              )}
+              {typeOptions.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              className={inputClass}
+              value={form.variant}
+              onChange={(e) => set("variant", e.target.value)}
+              placeholder={
+                form.model.trim() === ""
+                  ? "Pilih Model dulu, atau ketik bebas"
+                  : "Belum ada daftar Type untuk model ini — ketik bebas"
+              }
+            />
+          )}
         </div>
         <div>
           <label className={labelClass}>Kategori *</label>
@@ -355,14 +426,6 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
           <input required type="number" className={inputClass} value={form.km} onChange={(e) => set("km", e.target.value)} />
         </div>
         <div>
-          <label className={labelClass}>Kapasitas mesin (cc)</label>
-          <input type="number" className={inputClass} value={form.engine_cc} onChange={(e) => set("engine_cc", e.target.value)} />
-        </div>
-        <div>
-          <label className={labelClass}>Konsumsi BBM (km/liter)</label>
-          <input type="number" className={inputClass} value={form.fuel_consumption_kml} onChange={(e) => set("fuel_consumption_kml", e.target.value)} />
-        </div>
-        <div>
           <label className={labelClass}>Kondisi *</label>
           <input required className={inputClass} value={form.condition} onChange={(e) => set("condition", e.target.value)} placeholder="Sangat baik" />
         </div>
@@ -383,8 +446,35 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
           </select>
         </div>
         <div>
-          <label className={labelClass}>Pajak s/d (opsional)</label>
-          <input type="date" className={inputClass} value={form.tax_expiry} onChange={(e) => set("tax_expiry", e.target.value)} />
+          <label className={labelClass}>Masa berlaku pajak (opsional)</label>
+          <input
+            className={inputClass}
+            value={form.tax_expiry}
+            onChange={(e) => set("tax_expiry", e.target.value)}
+            placeholder="Bebas, contoh: 12 Agustus 2026"
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Masa berlaku STNK (opsional)</label>
+          <input
+            className={inputClass}
+            value={form.stnk_expiry}
+            onChange={(e) => set("stnk_expiry", e.target.value)}
+            placeholder="Bebas, contoh: 2029"
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Nomor plat kendaraan (opsional)</label>
+          <input
+            className={inputClass}
+            value={form.plat_nomor}
+            onChange={(e) => set("plat_nomor", e.target.value.toUpperCase())}
+            placeholder="Contoh: BK 1234 XY"
+          />
+          <p className="mt-1 text-xs text-zinc-400">
+            Ikut tampil di kartu katalog publik, dipakai admin untuk melacak unit
+            fisik saat pembeli menghubungi via WhatsApp.
+          </p>
         </div>
         <div className="flex items-center gap-4 pt-6">
           <label className="flex items-center gap-2 text-sm">
@@ -394,6 +484,10 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.bpkb} onChange={(e) => set("bpkb", e.target.checked)} />
             BPKB
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={form.faktur} onChange={(e) => set("faktur", e.target.checked)} />
+            Faktur
           </label>
         </div>
         <div>
@@ -412,6 +506,55 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
           <label className={labelClass}>Promo (opsional)</label>
           <input className={inputClass} value={form.promo} onChange={(e) => set("promo", e.target.value)} placeholder="Gratis servis 3x" />
         </div>
+
+        <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+          <p className="mb-2 text-xs font-medium text-zinc-600">
+            Referensi kalkulator kredit (samakan dengan Excel leasing)
+          </p>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div>
+              <p className="text-[10.5px] text-zinc-400">OTR (Market Price)</p>
+              <p className="text-sm font-semibold text-zinc-800">
+                {otr != null ? formatRupiah(otr) : "-"}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10.5px] text-zinc-400">MAX PENCAIRAN</p>
+              <p className="text-sm font-semibold text-zinc-800">
+                {maxPencairan != null ? formatRupiah(maxPencairan) : "Isi DP dulu"}
+              </p>
+            </div>
+          </div>
+          <p className="mt-2 text-[10.5px] text-zinc-400">
+            OTR dari tabel Market Price leasing (Type + Tahun) — kalau Type
+            belum terdaftar, dipakai fallback dari Harga (Rp) di atas.
+            MAX PENCAIRAN = OTR − DP untuk katalog di bawah, sama seperti sel
+            &quot;MAX PENCAIRAN&quot; di kalkulator Excel.
+          </p>
+        </div>
+
+        <div>
+          <label className={labelClass}>DP untuk katalog (Rp)</label>
+          <input
+            type="text"
+            inputMode="numeric"
+            className={inputClass}
+            value={formatThousands(form.dp_amount)}
+            onChange={(e) => set("dp_amount", e.target.value.replace(/\D/g, ""))}
+            placeholder="Kosongkan untuk hitung otomatis dari % DP minimum"
+          />
+          <p className="mt-1 text-xs text-zinc-400">
+            Ini DP PENUH yang dipakai kalkulator untuk menghitung cicilan.
+            Kalau ada subsidi/potongan DP di bawah, DP yang TAMPIL di katalog
+            otomatis dikurangi subsidi (lebih menarik buat pembeli), tapi
+            cicilan tetap dihitung dari DP penuh di kolom ini — contoh: DP di
+            sini isi 5jt, subsidi 1jt → katalog tampilkan DP 4jt, tapi cicilan
+            dihitung seolah DP 5jt. Kalau diisi di bawah DP minimum yang
+            diwajibkan (lihat halaman Settings kredit), kotak DP di katalog
+            tidak akan tampil. Kosongkan untuk pakai taksiran otomatis dari
+            persentase DP minimum.
+          </p>
+        </div>
         <div>
           <label className={labelClass}>Subsidi/potongan DP (Rp)</label>
           <input
@@ -422,10 +565,12 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
             placeholder="0"
           />
           <p className="mt-1 text-xs text-zinc-400">
-            Ditambahkan ke DP yang diinput pembeli sebelum dihitung di simulasi
-            kredit. Isi positif untuk subsidi (contoh: DP input 5jt + subsidi 2jt
-            → dihitung seolah DP 7jt, angsuran lebih ringan). Isi negatif untuk
-            surcharge (mengurangi DP efektif, angsuran lebih berat).
+            Dikurangkan dari DP di atas (atau dari taksiran DP minimum kalau DP
+            katalog dikosongkan) untuk dapat DP yang TAMPIL ke pembeli — tapi
+            cicilan tetap dihitung dari DP penuh (subsidi ditambahkan balik di
+            sisi kalkulator). Isi positif untuk subsidi (DP tampil lebih
+            kecil, angsuran tidak berubah). Isi negatif untuk surcharge (DP
+            tampil lebih besar dari DP penuh — jarang dipakai).
           </p>
         </div>
         <div>

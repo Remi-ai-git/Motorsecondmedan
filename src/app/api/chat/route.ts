@@ -62,12 +62,13 @@ export async function POST(req: Request) {
     [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
 
   const result = streamText({
-    // Model ringan & murah (Flash-Lite). Catatan: gemini-3.1-flash-lite
-    // sempat dicoba tapi bikin tool-calling (searchMotors, compareMotors,
-    // dll) hang tanpa respons — kemungkinan @ai-sdk/google@1.2.19 (versi
-    // terpasang) belum kompatibel dengan format function-calling Gemini 3.x.
-    // gemini-2.5-flash-lite tetap murah & terbukti jalan dengan tool calls.
-    model: google("gemini-2.5-flash-lite"),
+    // Model ringan & murah. gemini-2.5-flash-lite sudah di-retire Google
+    // ("no longer available to new users") per Juli 2026 — semua model
+    // generasi 2.5 kena efek yang sama untuk API key baru. Pindah ke
+    // gemini-3.1-flash-lite (rekomendasi resmi pengganti 2.5-flash-lite,
+    // stabil s/d Mei 2027, tetap murah). Sudah diverifikasi lewat REST API
+    // langsung: function-calling jalan normal di model ini.
+    model: google("gemini-3.1-flash-lite"),
     system: buildSystemPrompt(waNumber),
     messages,
     tools: aiTools,

@@ -1,13 +1,17 @@
 import type { CreditSettings, CreditSimulationResult, CreditSimulationRow, Motor } from "@/lib/types";
+import { getMarketPrice } from "@/lib/motor-market-price";
 
 /**
  * Simulasi kredit motor — port dari rumus Excel "Tools UMC SOF SUMUT Area
  * with PGI & Oona Insurance" (sheet Tools + Sheet3).
  *
  * Alur (mengikuti Sheet3 baris 30-39, kolom N-U):
- *  1. DP efektif = DP input pembeli + subsidi/diskon DP yang diatur admin
+ *  1. OTR = Harga Market Price resmi dari tabel leasing (Type + Tahun) — LIHAT
+ *     resolveOtr() di bawah. Kalkulator TIDAK memakai harga cash yang diinput
+ *     di website; itu semata harga jual yang ditampilkan ke pembeli cash.
+ *  1b. DP efektif = DP input pembeli + subsidi/diskon DP yang diatur admin
  *     per motor (motor.dp_discount).
- *  2. Pokok pencairan = OTR (harga motor) - DP efektif.
+ *  2. Pokok pencairan = OTR (Market Price) - DP efektif.
  *  3. Untuk setiap tenor:
  *     - Premi asuransi kendaraan = rate interpolasi(tenor) * OTR
  *     - Premi jiwa = base premium * jumlah tahun tenor (dibulatkan ke atas)
@@ -21,6 +25,29 @@ import type { CreditSettings, CreditSimulationResult, CreditSimulationRow, Motor
  */
 
 export class CreditCalcError extends Error {}
+
+/**
+ * Batas usia motor untuk bisa diajukan kredit — leasing tidak menerima
+ * pengajuan kredit untuk motor tahun 2018 ke bawah (kebijakan usia maksimal
+ * kendaraan). Motor seumur itu hanya bisa dibeli cash.
+ */
+export const CASH_ONLY_MAX_YEAR = 2018;
+
+/**
+ * Motor tahun 2019-2021 masih bisa kredit (kalkulator tetap jalan penuh),
+ * tapi sengaja tidak dipromosikan dengan angka "Cicilan mulai" di katalog —
+ * cukup tampilkan DP saja. Cicilan tetap bisa dilihat kalau pembeli sendiri
+ * yang menghitung lewat kalkulator di halaman detail.
+ */
+export const DP_ONLY_MAX_YEAR = 2021;
+
+export function isCashOnlyByAge(year: number): boolean {
+  return year <= CASH_ONLY_MAX_YEAR;
+}
+
+export function isDpOnlyByAge(year: number): boolean {
+  return year > CASH_ONLY_MAX_YEAR && year <= DP_ONLY_MAX_YEAR;
+}
 
 /** Replikasi fungsi PMT Excel (annuity-due jika type=1, default type=0). */
 function pmt(rate: number, nper: number, pv: number, fv = 0, type: 0 | 1 = 0): number {
@@ -57,14 +84,32 @@ function isPgiExcluded(motor: Pick<Motor, "model" | "variant">, s: CreditSetting
   return candidates.some((c) => excluded.has(c));
 }
 
+/**
+ * OTR yang dipakai kalkulator kredit — SELALU Harga Market Price resmi dari
+ * tabel leasing (dicocokkan lewat Type + Tahun motor), BUKAN harga cash yang
+ * diinput admin di website. Kalau Type motor tidak dikenal di tabel leasing
+ * (brand "Lainnya", atau Type belum terdaftar) atau tahunnya di luar rentang
+ * yang dicover periode ini, fallback ke harga cash website supaya kalkulator
+ * tetap bisa jalan (lebih baik taksiran daripada gagal total).
+ */
+function resolveOtr(motor: Pick<Motor, "variant" | "year" | "price">): number {
+  return getMarketPrice(motor.variant, motor.year) ?? motor.price;
+}
+
 export interface SimulateCreditInput {
-  motor: Pick<Motor, "model" | "variant" | "price" | "dp_discount">;
+  motor: Pick<Motor, "model" | "variant" | "price" | "dp_discount" | "year">;
   settings: CreditSettings;
   dpInput: number;
 }
 
 export function simulateCredit({ motor, settings, dpInput }: SimulateCreditInput): CreditSimulationResult {
-  const otr = motor.price;
+  if (isCashOnlyByAge(motor.year)) {
+    throw new CreditCalcError(
+      `Motor tahun ${motor.year} (tahun ${CASH_ONLY_MAX_YEAR} ke bawah) tidak bisa kredit — Cash Only.`
+    );
+  }
+
+  const otr = resolveOtr(motor);
   if (!otr || otr <= 0) {
     throw new CreditCalcError("Harga motor belum tersedia.");
   }
@@ -78,8 +123,7 @@ export function simulateCredit({ motor, settings, dpInput }: SimulateCreditInput
 
   if (dpPercent < settings.min_dp_percent) {
     throw new CreditCalcError(
-      `DP kurang. Minimum DP adalah ${Math.round(settings.min_dp_percent * 100)}% dari harga OTR ` +
-        `(≈ Rp${Math.ceil((otr * settings.min_dp_percent - dpDiscount) / 1000) * 1000}).`
+      "DP anda Kurang, Silahkan Tingkatkan DP anda Sesuai DP Minimal yang tertera."
     );
   }
   if (dpEffective >= otr) {
@@ -129,4 +173,78 @@ export function simulateCredit({ motor, settings, dpInput }: SimulateCreditInput
     financed_principal: financedPrincipalBase,
     rows,
   };
+}
+
+export interface MotorCreditSummary {
+  dp_minimal: number;
+  cicilan_mulai: number;
+}
+
+/**
+ * Ringkasan kredit singkat untuk kartu katalog ("DP mulai Rp X" / "Cicilan
+ * mulai Rp Y/bulan").
+ *
+ * Contoh cara kerja subsidi (dicek ulang terhadap kalkulator Excel):
+ *   Admin isi "DP untuk katalog" = Rp 5.000.000, subsidi (dp_discount) =
+ *   Rp 1.000.000.
+ *   -> DP yang TAMPIL di katalog = 5.000.000 - 1.000.000 = Rp 4.000.000
+ *      (angka yang perlu dibawa pembeli, sudah dikurangi subsidi dealer).
+ *   -> Cicilan tetap dihitung dari DP PENUH Rp 5.000.000 (subsidi dealer
+ *      menambah balik di sisi kalkulator, jadi pokok yang diangsur berkurang
+ *      seolah pembeli bayar DP 5jt penuh — bukan cuma 4jt).
+ *
+ * Mekanismenya: dpInput yang dikirim ke simulateCredit = dp_amount -
+ * dp_discount (=DP yang tampil ke pembeli). Di dalam simulateCredit,
+ * dp_effective = dpInput + dp_discount = dp_amount lagi (DP penuh) — itu yang
+ * dipakai mengurangi pokok pencairan untuk hitung angsuran. Pola yang sama
+ * dipakai untuk kasus otomatis (dp_amount belum diisi admin): dpInput =
+ * taksiran DP minimum (dari % settings) dikurangi subsidi, supaya angka yang
+ * tampil ke pembeli juga sudah bersih dari subsidi, sementara cicilan tetap
+ * dihitung dari DP penuh sesuai % minimum.
+ *
+ * Kalau DP (penuh, setelah subsidi ditambahkan balik) ternyata di bawah DP
+ * minimum yang diwajibkan leasing, kalkulator menolak (CreditCalcError) dan
+ * fungsi ini mengembalikan null — supaya tidak menampilkan angka yang
+ * melanggar aturan minimum DP ke pembeli.
+ *
+ * Cicilan mulai = angsuran terendah di antara semua tenor pada DP tsb —
+ * biasanya tenor terpanjang.
+ *
+ * OTR yang dipakai untuk taksiran % DP minimum (kalau dp_amount belum diisi
+ * admin) juga Harga Market Price resmi (resolveOtr), bukan harga cash — lihat
+ * komentar di resolveOtr().
+ *
+ * Mengembalikan null juga kalau OTR (Market Price maupun fallback harga cash)
+ * belum ada atau tarif sedang tidak berlaku (effective_until sudah lewat).
+ */
+export function computeMotorCreditSummary(
+  motor: Pick<Motor, "model" | "variant" | "price" | "dp_discount" | "dp_amount" | "year">,
+  settings: CreditSettings
+): MotorCreditSummary | null {
+  if (isCashOnlyByAge(motor.year)) return null;
+  if (settings.effective_until && new Date(settings.effective_until) < new Date()) {
+    return null;
+  }
+
+  const otr = resolveOtr(motor);
+  if (!otr || otr <= 0) return null;
+
+  const dpDiscount = motor.dp_discount ?? 0;
+  // dpInput = DP yang tampil ke pembeli (sudah dikurangi subsidi). simulateCredit
+  // menambahkan lagi dpDiscount di dalam (dp_effective = dpInput + dpDiscount),
+  // jadi cicilan tetap dihitung dari DP penuh (dp_amount, atau taksiran % kalau
+  // dp_amount belum diisi) — lihat contoh di komentar atas fungsi ini.
+  const dpInput =
+    motor.dp_amount != null
+      ? Math.max(0, motor.dp_amount - dpDiscount)
+      : Math.max(0, Math.ceil((otr * settings.min_dp_percent - dpDiscount) / 1000) * 1000);
+
+  try {
+    const result = simulateCredit({ motor, settings, dpInput });
+    if (result.rows.length === 0) return null;
+    const cicilanMulai = Math.min(...result.rows.map((r) => r.monthly_installment));
+    return { dp_minimal: dpInput, cicilan_mulai: cicilanMulai };
+  } catch {
+    return null;
+  }
 }
