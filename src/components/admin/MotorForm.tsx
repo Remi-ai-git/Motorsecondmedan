@@ -472,7 +472,8 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
             placeholder="Contoh: BK 1234 XY"
           />
           <p className="mt-1 text-xs text-zinc-400">
-            Untuk catatan internal admin — tidak ditampilkan di halaman publik.
+            Ikut tampil di kartu katalog publik, dipakai admin untuk melacak unit
+            fisik saat pembeli menghubungi via WhatsApp.
           </p>
         </div>
         <div className="flex items-center gap-4 pt-6">

@@ -84,8 +84,8 @@ export default function MotorCard({
       <Link href={`/motor/${motor.slug}`} className="block">
         <div className="space-y-0 p-2 pt-0.5 sm:space-y-0.5 sm:p-2.5 sm:pt-1">
           <p className="text-[10.5px] leading-none text-zinc-500">
-            {motor.year} · {motor.km.toLocaleString("id-ID")} km · Masa Berlaku Pajak:{" "}
-            {motor.tax_expiry || "-"}
+            {motor.year} · {motor.km.toLocaleString("id-ID")} km · Pajak: {motor.tax_expiry || "-"}
+            {motor.plat_nomor ? ` · ${motor.plat_nomor}` : ""}
           </p>
           {motor.promo && (
             <p className="mt-0.5 inline-block rounded bg-amber-50 px-2 py-0.5 text-[10.5px] font-medium leading-none text-amber-700">
