@@ -126,12 +126,12 @@ export default async function MotorDetailPage({
         <p className="mt-6 text-xs text-zinc-700 sm:text-base">{motor.description}</p>
       )}
 
-      <h2 className="mb-3 mt-8 text-[13.5px] font-bold sm:text-lg">Spesifikasi</h2>
+      <h2 className="mb-3 mt-8 text-[15.5px] font-bold sm:text-lg">Spesifikasi</h2>
       <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
         {specs.map(([label, value], i) => (
           <div
             key={label}
-            className={`flex justify-between px-4 py-2.5 text-[10.5px] sm:text-sm ${i % 2 ? "bg-zinc-50" : ""}`}
+            className={`flex justify-between px-4 py-2.5 text-xs sm:text-sm ${i % 2 ? "bg-zinc-50" : ""}`}
           >
             <span className="text-zinc-500">{label}</span>
             <span className="font-medium capitalize">{value}</span>
