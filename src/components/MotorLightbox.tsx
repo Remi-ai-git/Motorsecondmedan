@@ -17,23 +17,23 @@ export default function MotorLightbox({
   alt,
   initialIndex,
   onClose,
-  openedAt,
+  initialScale,
 }: {
   images: string[];
   alt: string;
   initialIndex: number;
   onClose: () => void;
   /**
-   * Timestamp (Date.now()) dari tap/klik di foto galeri yang MEMBUKA lightbox
-   * ini. Dipakai buat "menyambung" deteksi double-tap: tap pertama membuka
-   * lightbox (mount komponen baru, jadi lastTap di sini pasti 0 kalau tidak
-   * di-seed) — tanpa ini, tap kedua yang harusnya jadi "tap ke-2" malah
-   * dianggap tap pertama lagi, jadi butuh 3x tap baru zoom.
+   * Scale awal saat lightbox baru dibuka — dipakai kalau MotorGallery sudah
+   * mendeteksi gesture ini sebagai double-tap SEBELUM lightbox di-mount
+   * (lightbox langsung kebuka dalam kondisi zoom, bukan nunggu tap kedua
+   * lagi di sini — karena tap kedua fisik user tidak akan pernah "mendarat"
+   * di komponen lama yang sudah di-unmount).
    */
-  openedAt?: number;
+  initialScale?: number;
 }) {
   const [index, setIndex] = useState(initialIndex);
-  const [scale, setScale] = useState(1);
+  const [scale, setScale] = useState(initialScale ?? 1);
   const [translate, setTranslate] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   // true selama gesture kontinu (pinch 2 jari, pan geser) supaya transform
@@ -45,7 +45,7 @@ export default function MotorLightbox({
   const pinchStart = useRef<{ dist: number; scale: number } | null>(null);
   const panStart = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
-  const lastTap = useRef(openedAt ?? 0);
+  const lastTap = useRef(0);
   const wheelIdleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const resetZoom = () => {

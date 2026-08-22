@@ -1,7 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import MotorLightbox from "@/components/MotorLightbox";
+
+// Jendela waktu antar tap/klik supaya dianggap "double tap/click".
+const DOUBLE_TAP_MS = 350;
+const DOUBLE_TAP_ZOOM = 2.5;
 
 export default function MotorGallery({
   images,
@@ -12,23 +16,52 @@ export default function MotorGallery({
 }) {
   const [active, setActive] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  // Timestamp tap yang membuka lightbox — diteruskan ke MotorLightbox supaya
-  // "tap ke-2" dari gesture double-tap (tap pertama = buka lightbox, tap
-  // kedua = zoom) terdeteksi walau lightbox baru saja di-mount.
-  const [openedAt, setOpenedAt] = useState<number | null>(null);
+  const [startZoomed, setStartZoomed] = useState(false);
+
+  const lastTap = useRef(0);
+  const pendingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (pendingTimer.current) clearTimeout(pendingTimer.current);
+    };
+  }, []);
 
   if (images.length === 0) return null;
 
-  function openLightbox(i: number) {
-    setOpenedAt(Date.now());
+  function openLightbox(i: number, zoomed: boolean) {
+    setStartZoomed(zoomed);
     setLightboxIndex(i);
+  }
+
+  /**
+   * Tap/klik pertama di foto TIDAK langsung buka lightbox — ditunda sebentar
+   * (DOUBLE_TAP_MS) dulu. Kalau ada tap kedua yang menyusul cepat sebelum
+   * jendela waktu itu habis, dianggap "double tap" dan lightbox langsung
+   * dibuka dalam kondisi ZOOM. Ini perlu karena begitu lightbox kebuka,
+   * DOM foto lama sudah diganti — tap fisik kedua user tidak akan pernah
+   * "mendarat" di elemen yang sama lagi buat dideteksi belakangan, jadi
+   * keputusan double-tap harus selesai SEBELUM lightbox di-mount.
+   */
+  function handleTap(i: number) {
+    const now = Date.now();
+    if (now - lastTap.current < DOUBLE_TAP_MS) {
+      if (pendingTimer.current) clearTimeout(pendingTimer.current);
+      lastTap.current = 0;
+      openLightbox(i, true);
+      return;
+    }
+    lastTap.current = now;
+    pendingTimer.current = setTimeout(() => {
+      openLightbox(i, false);
+    }, DOUBLE_TAP_MS);
   }
 
   return (
     <div className="mb-6">
       <button
         type="button"
-        onClick={() => openLightbox(active)}
+        onClick={() => handleTap(active)}
         className="flex h-64 w-full items-center justify-center overflow-hidden rounded-2xl bg-zinc-100 sm:h-80"
         aria-label="Lihat foto full screen — tap 2x untuk zoom"
       >
@@ -46,7 +79,7 @@ export default function MotorGallery({
               key={url}
               onClick={() => {
                 setActive(i);
-                openLightbox(i);
+                openLightbox(i, false);
               }}
               className={`flex h-16 w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg border-2 bg-zinc-100 ${
                 i === active ? "border-rose-600" : "border-transparent"
@@ -65,7 +98,7 @@ export default function MotorGallery({
           alt={alt}
           initialIndex={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
-          openedAt={openedAt ?? undefined}
+          initialScale={startZoomed ? DOUBLE_TAP_ZOOM : undefined}
         />
       )}
     </div>
