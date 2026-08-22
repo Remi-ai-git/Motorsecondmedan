@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import type { Motor } from "@/lib/types";
+import { formatRupiah, type Motor } from "@/lib/types";
 import { CATEGORY_OPTIONS, TAX_STATUS_OPTIONS, STATUS_OPTIONS } from "@/lib/motor-schema";
 import {
   BRAND_OPTIONS,
@@ -11,6 +11,7 @@ import {
   modelsForBrand,
 } from "@/lib/motor-model-catalog";
 import { typesForModel } from "@/lib/motor-type-catalog";
+import { getMarketPrice } from "@/lib/motor-market-price";
 
 /** Format string angka jadi pakai titik ribuan, contoh: "5000000" -> "5.000.000". */
 function formatThousands(digits: string): string {
@@ -114,6 +115,16 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
     hasTypeOptions &&
     form.variant.trim() !== "" &&
     !typeOptions.some((t) => t.toUpperCase() === form.variant.trim().toUpperCase());
+
+  // OTR & MAX PENCAIRAN — sama seperti kalkulator Excel leasing (Tools!D16 &
+  // D18): OTR = Harga Market Price resmi (Type + Tahun), MAX PENCAIRAN = OTR
+  // dikurangi DP PENUH (dp_amount) yang diisi di bawah. Ditampilkan sebagai
+  // info saja supaya admin bisa cek angka ini cocok dengan Excel leasing.
+  const yearNum = Number(form.year);
+  const otr =
+    getMarketPrice(form.variant, yearNum) ?? (form.price ? Number(form.price) : null);
+  const dpAmountNum = form.dp_amount ? Number(form.dp_amount) : null;
+  const maxPencairan = otr != null && dpAmountNum != null ? otr - dpAmountNum : null;
 
   function handleBrandChoice(choice: string) {
     setBrandChoice(choice);
@@ -494,6 +505,33 @@ export default function MotorForm({ initial, motorId }: { initial?: Motor; motor
           <label className={labelClass}>Promo (opsional)</label>
           <input className={inputClass} value={form.promo} onChange={(e) => set("promo", e.target.value)} placeholder="Gratis servis 3x" />
         </div>
+
+        <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+          <p className="mb-2 text-xs font-medium text-zinc-600">
+            Referensi kalkulator kredit (samakan dengan Excel leasing)
+          </p>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div>
+              <p className="text-[10.5px] text-zinc-400">OTR (Market Price)</p>
+              <p className="text-sm font-semibold text-zinc-800">
+                {otr != null ? formatRupiah(otr) : "-"}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10.5px] text-zinc-400">MAX PENCAIRAN</p>
+              <p className="text-sm font-semibold text-zinc-800">
+                {maxPencairan != null ? formatRupiah(maxPencairan) : "Isi DP dulu"}
+              </p>
+            </div>
+          </div>
+          <p className="mt-2 text-[10.5px] text-zinc-400">
+            OTR dari tabel Market Price leasing (Type + Tahun) — kalau Type
+            belum terdaftar, dipakai fallback dari Harga (Rp) di atas.
+            MAX PENCAIRAN = OTR − DP untuk katalog di bawah, sama seperti sel
+            &quot;MAX PENCAIRAN&quot; di kalkulator Excel.
+          </p>
+        </div>
+
         <div>
           <label className={labelClass}>DP untuk katalog (Rp)</label>
           <input
