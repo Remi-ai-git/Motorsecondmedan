@@ -42,29 +42,29 @@ export default function MotorCard({
             </div>
           )}
         </div>
-        <div className="space-y-1.5 p-3 pb-0">
-          <div className="flex items-center justify-between gap-1.5">
-            <h3 className="text-[13.5px] font-semibold leading-snug">
+        <div className="space-y-0.5 p-2.5 pb-0">
+          <div className="flex items-center justify-between gap-1">
+            <h3 className="text-[13.5px] font-semibold leading-tight">
               {motor.brand} {motor.model}
               {motor.variant ? ` ${motor.variant}` : ""}
             </h3>
             <span
-              className={`rounded-full px-2 py-0.5 text-[10.5px] font-medium leading-tight ${categoryColors[motor.category] ?? "bg-zinc-100 text-zinc-700"}`}
+              className={`rounded-full px-1.5 py-0.5 text-[10.5px] font-medium leading-none ${categoryColors[motor.category] ?? "bg-zinc-100 text-zinc-700"}`}
             >
               {motor.category}
             </span>
           </div>
-          <p className="text-base font-bold leading-snug text-rose-600">
+          <p className="text-base font-bold leading-tight text-rose-600">
             {formatRupiah(motor.price)}
           </p>
           {dpMinimal != null && cicilanMulai != null ? (
-            <div className="space-y-0.5 text-sm font-semibold leading-snug text-rose-600">
+            <div className="text-sm font-semibold leading-tight text-rose-600">
               <p>DP mulai {formatRupiah(dpMinimal)}</p>
               {!dpOnly && <p>Cicilan mulai {formatRupiah(cicilanMulai)}/bulan</p>}
             </div>
           ) : (
             cashOnly && (
-              <p className="text-[12.25px] font-semibold leading-snug text-zinc-500">
+              <p className="text-[12.25px] font-semibold leading-tight text-zinc-500">
                 💵 Cash Only — tidak bisa kredit
               </p>
             )
@@ -72,23 +72,23 @@ export default function MotorCard({
         </div>
       </Link>
       {!cashOnly && !dpOnly && (
-        <div className="px-3 pt-1.5">
+        <div className="px-2.5 pt-1">
           <Link
             href={`/motor/${motor.slug}#kredit`}
-            className="block w-full rounded-full border border-rose-600 px-3 py-1.5 text-center text-xs font-medium text-rose-600 transition hover:bg-rose-600 hover:text-white"
+            className="block w-full rounded-full border border-rose-600 px-3 py-1 text-center text-xs font-medium text-rose-600 transition hover:bg-rose-600 hover:text-white"
           >
             Hitung Kredit
           </Link>
         </div>
       )}
       <Link href={`/motor/${motor.slug}`} className="block">
-        <div className="space-y-1 p-3 pt-2">
-          <p className="text-[10.5px] leading-snug text-zinc-500">
+        <div className="space-y-0.5 p-2.5 pt-1">
+          <p className="text-[10.5px] leading-tight text-zinc-500">
             {motor.year} · {motor.km.toLocaleString("id-ID")} km · Masa Berlaku Pajak:{" "}
             {motor.tax_expiry || "-"}
           </p>
           {motor.promo && (
-            <p className="inline-block rounded bg-amber-50 px-2 py-0.5 text-[10.5px] font-medium leading-tight text-amber-700">
+            <p className="inline-block rounded bg-amber-50 px-2 py-0.5 text-[10.5px] font-medium leading-none text-amber-700">
               🎁 {motor.promo}
             </p>
           )}
