@@ -12,9 +12,16 @@
     "NEXT_PUBLIC_SUPABASE_URL": "https://zipkoxltnwojyphroocj.supabase.co",
     "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppcGtveGx0bndvanlwaHJvb2NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1ODIyMDcsImV4cCI6MjEwMjE1ODIwN30.OrIGcU3v0Pwmy-4rdz7hl55zZDt0KOYmW61ZoCdpntw",
     "NEXT_PUBLIC_WA_NUMBER": "6285270706099",
-    "NEXT_PUBLIC_SITE_URL": "https://artamotormedan.com"
-  }
+    "NEXT_PUBLIC_SITE_URL": "https://artamotormedan.com",
+    "NEXT_PUBLIC_R2_PUBLIC_URL": "https://foto.artamotormedan.com"
+  },
+  "r2_buckets": [
+    {
+      "binding": "MOTOR_IMAGES",
+      "bucket_name": "motor-images"
+    }
+  ]
   // Secret (set via dashboard atau `npx wrangler secret put`):
   // - GOOGLE_GENERATIVE_AI_API_KEY (wajib)
-  // - SUPABASE_SERVICE_ROLE_KEY (opsional, riwayat chat)
+  // - SUPABASE_SERVICE_ROLE_KEY (opsional, riwayat chat lama — sudah tidak dipakai upload foto)
 }

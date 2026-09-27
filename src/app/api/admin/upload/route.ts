@@ -1,8 +1,9 @@
-import { getSupabaseAdmin } from "@/lib/supabase";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
-// Runtime default (Node.js) — sesuai dokumentasi @opennextjs/cloudflare,
-// bukan "edge", supaya jalan benar saat di-deploy ke Cloudflare Workers.
-const BUCKET = "motor-images";
+// Upload foto motor ke Cloudflare R2 (bucket "motor-images", binding
+// MOTOR_IMAGES di wrangler.jsonc) — sebelumnya ke Supabase Storage, dipindah
+// supaya tidak lagi kena batas egress/kuota Supabase (lihat pembahasan soal
+// error 402 Payment Required). R2 tidak kena biaya egress sama sekali.
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
@@ -14,12 +15,24 @@ function sanitizeFileName(name: string): string {
 }
 
 export async function POST(req: Request) {
-  const admin = getSupabaseAdmin();
-  if (!admin) {
+  const { env } = await getCloudflareContext({ async: true });
+  const bucket = env.MOTOR_IMAGES;
+  if (!bucket) {
     return Response.json(
       {
         error:
-          "SUPABASE_SERVICE_ROLE_KEY belum di-set di server. Upload gambar butuh service role key untuk menulis ke Storage.",
+          'Bucket R2 belum tersambung ke Worker (binding "MOTOR_IMAGES" tidak ditemukan). Cek r2_buckets di wrangler.jsonc lalu deploy ulang.',
+      },
+      { status: 500 }
+    );
+  }
+
+  const publicBaseUrl = (process.env.NEXT_PUBLIC_R2_PUBLIC_URL ?? "").replace(/\/$/, "");
+  if (!publicBaseUrl) {
+    return Response.json(
+      {
+        error:
+          "NEXT_PUBLIC_R2_PUBLIC_URL belum di-set. Isi dengan domain publik bucket R2, contoh: https://foto.artamotormedan.com",
       },
       { status: 500 }
     );
@@ -47,22 +60,17 @@ export async function POST(req: Request) {
   const ext = file.name.includes(".") ? file.name.split(".").pop() : "jpg";
   const path = `motors/${crypto.randomUUID()}-${sanitizeFileName(file.name || `foto.${ext}`)}`;
 
-  const { error: uploadError } = await admin.storage
-    .from(BUCKET)
-    .upload(path, await file.arrayBuffer(), {
-      contentType: file.type,
-      upsert: false,
+  try {
+    await bucket.put(path, await file.arrayBuffer(), {
+      httpMetadata: { contentType: file.type },
     });
-
-  if (uploadError) {
+  } catch (e) {
     return Response.json(
-      {
-        error: `Upload gagal: ${uploadError.message}. Pastikan bucket "${BUCKET}" sudah dibuat di Supabase Storage (lihat supabase/storage-setup.sql).`,
-      },
+      { error: `Upload gagal: ${e instanceof Error ? e.message : "Unknown error"}` },
       { status: 500 }
     );
   }
 
-  const { data } = admin.storage.from(BUCKET).getPublicUrl(path);
-  return Response.json({ url: data.publicUrl, path });
+  const url = `${publicBaseUrl}/${path}`;
+  return Response.json({ url, path });
 }
